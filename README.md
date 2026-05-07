@@ -37,6 +37,22 @@ It runs a config grid (default 16), aggregates trials, ranks results, and writes
 - Python `3.11+` is recommended (smoother dependency installs, especially for Modal on Intel macOS).
 - If you run local backend, you need `llama-cli` available.
 
+## Universal Install Policy (Important)
+
+Use backend-specific installs instead of one generic install:
+
+1) If you will run `--backend local`:
+- install only base + `huggingface_hub`
+- do **not** install `modal` unless needed
+
+2) If you will run `--backend modal`:
+- use a Python 3.11 venv for best cross-platform reliability
+- then install `modal` + `huggingface_hub`
+
+Why:
+- Some transitive packages (for Modal stack) may not have prebuilt wheels on every OS/CPU/Python combination.
+- `python -m pip install -U pip setuptools wheel` helps tooling, but it cannot create missing upstream wheels.
+
 ## Path A: Local Quick Start
 
 Use this if you want to run on your own machine (no Modal needed).
@@ -76,10 +92,31 @@ sigilant-runner run \
 
 Use this if you want cloud GPU runs.
 
+Precheck (required for Modal path):
+
+```bash
+python3.11 --version
+```
+
+If that fails, install Python 3.11 first:
+
+- macOS (Homebrew):
+```bash
+brew install python@3.11
+```
+- Ubuntu/Debian:
+```bash
+sudo apt-get update && sudo apt-get install -y python3.11 python3.11-venv
+```
+- Windows:
+Install Python 3.11 from python.org and ensure `python3.11`/`py -3.11` is available.
+
+Then continue:
+
 ```bash
 git clone https://github.com/sigilantlabs/sigilant-sweep.git
 cd sigilant-sweep
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 pip install -e .
@@ -222,7 +259,7 @@ Typical error:
 - `error: can't find Rust compiler`
 
 Preferred fix:
-- use Python `3.11+` venv for this repo and reinstall.
+- use Python `3.11+` venv for Modal path and reinstall.
 
 ```bash
 deactivate 2>/dev/null || true
@@ -232,6 +269,15 @@ source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 pip install -e .
 pip install -U modal huggingface_hub
+```
+
+Alternative (if you must stay on Python 3.10):
+- install Rust toolchain first, then install modal deps
+- this is slower and less predictable across machines
+
+Fast check:
+```bash
+python3.11 --version
 ```
 
 ### 4) All rows `FAILED`
