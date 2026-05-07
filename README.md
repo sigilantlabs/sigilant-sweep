@@ -2,12 +2,31 @@
 
 Sigilant Runner is a GGUF config optimizer.
 
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Engine](https://img.shields.io/badge/engine-llama.cpp-2ea44f)
+![Backends](https://img.shields.io/badge/backends-local%20%7C%20modal-7a3cff)
+![Benchmark](https://img.shields.io/badge/modes-ranking%20%7C%20depth_profile-1f6feb)
+![Status](https://img.shields.io/badge/status-vLLM%20coming%20soon-f59e0b)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+Pick the best `llama.cpp` serving config by benchmarking quant, ctx, and kv settings with repeatable scoring and artifacts.
+
 This repo currently focuses on:
 - `llama.cpp` engine
 - `local` and `modal` backends
 
 Planned:
 - add `vLLM` and additional engines/backends in later releases
+
+## Quick Links
+
+- [3 Commands To First Result](#3-commands-to-first-result)
+- [Step-by-Step: Local Run](#step-by-step-local-run)
+- [Step-by-Step: Modal Run](#step-by-step-modal-run)
+- [Depth Profile Mode](#depth-profile-mode)
+- [Agent Smoke (5-check quick gate)](#agent-smoke-5-check-quick-gate)
+- [Troubleshooting](#troubleshooting)
+- [Appendix A: Installing llama.cpp / llama-cli](#appendix-a-installing-llamacpp--llama-cli)
 
 It runs a grid sweep, measures latency/throughput/quality, ranks configs, and writes run artifacts.
 
@@ -20,10 +39,35 @@ It runs a grid sweep, measures latency/throughput/quality, ranks configs, and wr
 - optional depth profile (8k/14k/28k prompts)
 - optional 5-case agent smoke gate
 
-## Quick Start (Copy-Paste)
+## Quick Start (Choose one path)
+
+### Path A: Local backend (no Modal required)
 
 ```bash
-cd /path/to/sigilant-runner
+git clone https://github.com/sigilantlabs/sigilant-sweep.git
+cd sigilant-sweep
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+export HF_TOKEN=hf_xxx
+export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
+
+sigilant-runner run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend modal \
+  --engine llama.cpp \
+  --hardware l4 \
+  --configs 16 \
+  --trials 10 \
+  --score-profile balanced \
+  --agent-smoke
+```
+
+### Path B: Modal backend
+
+```bash
+git clone https://github.com/sigilantlabs/sigilant-sweep.git
+cd sigilant-sweep
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -40,6 +84,24 @@ sigilant-runner run \
   --trials 10 \
   --score-profile balanced \
   --agent-smoke
+```
+
+## 3 Commands To First Result (assuming setup already done)
+
+Local:
+
+```bash
+cd sigilant-sweep
+source .venv/bin/activate
+sigilant-runner run --model Qwen/Qwen2.5-1.5B-Instruct-GGUF --backend local --engine llama.cpp --configs 16 --trials 3 --score-profile balanced
+```
+
+Modal:
+
+```bash
+cd sigilant-sweep
+source .venv/bin/activate
+sigilant-runner run --model Qwen/Qwen2.5-1.5B-Instruct-GGUF --backend modal --engine llama.cpp --hardware l4 --configs 16 --trials 3 --score-profile balanced
 ```
 
 ## Prerequisites
