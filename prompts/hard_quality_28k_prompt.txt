@@ -1,0 +1,115 @@
+You are writing a long-form execution blueprint for a company-wide transformation program.
+This document is used by executives, engineering directors, product leads, finance, security, and operations managers.
+Your output must be detailed, coherent, and directly actionable.
+
+Program objective:
+Deliver profitable growth, reliability, and operational discipline in one integrated plan.
+
+Company profile:
+- Mid-sized AI product company.
+- Three product surfaces: consumer assistant, enterprise workflow suite, benchmarking platform.
+- Shared infrastructure, shared on-call, partially shared planning process.
+
+Observed challenges:
+1) High compute spend variance from ungoverned benchmark workloads.
+2) Product commitments made before engineering capacity validation.
+3) Reliability outcomes improving in pockets but not system-wide.
+4) Security reviews are often late-stage and create launch delays.
+5) Finance and engineering disagree on cost attribution granularity.
+6) Enterprise sales commitments drift from platform roadmap.
+7) Data quality and metric definitions differ by team.
+8) Incident response is faster, but repeat incidents are not dropping fast enough.
+9) Internal platform tooling is heavily used but under-owned.
+10) Hiring pipeline cannot keep pace with specialized role demand.
+
+You must build:
+- Strategic narrative
+- Operating model
+- Governance model
+- Financial envelope model
+- Reliability and risk architecture
+- Metrics design
+- Quarter-by-quarter implementation plan
+
+Required sections:
+
+Section A: North-star outcomes
+- Define 5 program outcomes with measurable success criteria.
+- For each: timeline, owner group, dependency class.
+
+Section B: Assumptions and constraints
+- Hard constraints (budget, headcount, capacity, compliance).
+- Soft constraints (preferences, sequencing).
+- Unknowns requiring discovery.
+
+Section C: Risk decomposition
+- At least 12 risks.
+- Include root cause, trigger, blast radius, early warning signal, and mitigation.
+- Include at least 3 systemic risks with cross-team coupling.
+
+Section D: Operating model redesign
+- How planning cycles should run.
+- How intake and prioritization should be gated.
+- What decision rights move to which level.
+- How escalation should work.
+
+Section E: Delivery architecture
+- Program split into workstreams with interfaces.
+- For each workstream: charter, non-goals, deliverables, acceptance criteria.
+- Include explicit handoff contracts between teams.
+
+Section F: Financial and compute controls
+- Budgeting model by function and workload class.
+- Spend guardrails for benchmark workloads.
+- Approval policy for overages.
+- Monthly variance review template.
+
+Section G: Reliability and security integration
+- Release policy tied to reliability thresholds.
+- Security-by-default integration policy.
+- Incident recurrence prevention loop.
+- Runbook and ownership completeness targets.
+
+Section H: KPI framework
+- Leading indicators and lagging indicators.
+- Metric definitions to avoid ambiguity.
+- KPI anti-patterns to avoid.
+- Review cadence and corrective action triggers.
+
+Section I: 4-quarter roadmap
+- Quarter objectives, milestones, dependencies, and decision gates.
+- Include explicit "stop doing" decisions.
+- Include expected outcomes and failure contingencies.
+
+Section J: Scenario planning
+- Base case, optimistic case, stress case.
+- For each: assumptions, adaptation triggers, and fallback actions.
+
+Section K: Weekly execution ritual
+- Agenda template for cross-functional review.
+- Decision log format.
+- Owner accountability checklist.
+
+Section L: Immediate actions (next 2 weeks)
+- List concrete actions with owners and expected outputs.
+
+Strict constraints:
+- No external references.
+- No buzzword-heavy filler.
+- Every recommendation must map to at least one measurable outcome.
+- Explicitly call out tradeoffs.
+- Keep the plan implementable with realistic coordination overhead.
+
+Input notes:
+- Consumer users value speed but leave when quality is inconsistent.
+- Enterprise buyers prioritize reliability and operational predictability.
+- Benchmarking platform improves internal quality but causes cost spikes when unmanaged.
+- Leadership wants one plan, not three disconnected plans.
+- Team sentiment indicates fatigue from changing priorities and unclear ownership.
+
+Output style:
+- Structured headings and compact tables.
+- Direct, practical language.
+- Final section: “Approval Decisions Needed Now”.
+
+Now produce the complete transformation blueprint.

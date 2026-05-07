@@ -1,0 +1,49 @@
+You are an operations analyst preparing a risk and execution brief for a cross-functional leadership review.
+Read the full context below and produce a response that is structured, precise, and internally consistent.
+
+Context:
+This organization runs three product lines: consumer AI app, B2B workflow platform, and model-evaluation infrastructure.
+The board asked for one consolidated plan because operating costs rose 22% quarter-over-quarter while growth slowed.
+Leadership suspects the problem is not demand, but planning inconsistency between engineering, product, and go-to-market.
+
+Known facts:
+1) Consumer AI app grew users but churn is concentrated in day-7 and day-30 cohorts.
+2) B2B platform has strong pilot conversion but long enterprise procurement cycles.
+3) Eval infrastructure has high usage by internal teams but no clear external monetization strategy.
+4) Incident response improved MTTR by 35%, but incident volume rose in the same period.
+5) Cloud GPU spend is peaky and often correlated with unplanned benchmark runs.
+6) Revenue recognition is healthy, but cash collection is delayed in two major accounts.
+7) Sales asks for faster feature commitments; engineering warns against roadmap overcommitment.
+8) Security team reports growing third-party risk from unmanaged integrations.
+
+You must deliver:
+- A concise executive summary (max 8 bullets).
+- Top 10 risks with severity, owner, and mitigation.
+- A 90-day execution plan with milestones and measurable outcomes.
+- A decision table: what to stop, start, continue.
+- A conflict map: where teams disagree and how to resolve.
+- A one-page metrics framework that avoids vanity KPIs.
+
+Constraints:
+- Do not invent external facts.
+- If a claim depends on assumptions, state them explicitly.
+- Prioritize decisions with measurable impact in under 90 days.
+- Keep language direct and non-marketing.
+- Show tradeoffs where choices compete for the same resources.
+
+Additional material:
+The consumer app team proposes aggressive A/B expansion and daily model refreshes.
+Platform team proposes fewer launches but deeper enterprise features and stronger reliability SLAs.
+Infra team proposes consolidating benchmark pipelines and enforcing budgeted experiment windows.
+Finance proposes tighter spend controls and staged approval thresholds for any non-customer-facing compute.
+People ops notes elevated attrition risk in SRE and data engineering due to sustained on-call pressure.
+
+Requested output style:
+1) Executive summary
+2) Risk register
+3) 90-day plan
+4) Decision table
+5) Metrics framework
+6) Open questions
+
+Now provide the full response.

@@ -1,0 +1,64 @@
+You are preparing a deep strategy memo for an executive operating review.
+The memo must integrate product, engineering, finance, sales, security, and operations.
+
+Scenario:
+An AI company with three business units needs a 12-month operating plan.
+The board demands profitable growth while preserving innovation velocity.
+The company has uneven execution quality across teams and recurring planning conflicts.
+
+Business units:
+1) Consumer assistant product
+2) Enterprise workflow platform
+3) Model benchmarking and optimization tooling
+
+Current state signals:
+- Revenue grew modestly, but gross margin narrowed.
+- GPU cost volatility increased due to ad-hoc experiments.
+- Reliability metrics improved in two services, regressed in one.
+- Customer support escalations are down overall but up for enterprise incidents.
+- Sales pipeline value increased, but average cycle length also increased.
+- Security findings are mostly medium severity, concentrated in integration surfaces.
+- Hiring plans are approved, but key roles remain unfilled.
+- Data quality issues caused at least two misreported KPI incidents.
+
+Cross-team friction points:
+- Product wants faster release cadence; platform reliability team wants stronger release gates.
+- Sales pushes custom commitments; engineering asks for strict template-based contracts.
+- Finance asks for cost envelopes by team; experimentation owners resist hard caps.
+- Security requires integration reviews; partner team claims reviews delay activation.
+
+Task:
+Create a complete operating memo with the following sections:
+1) Context summary (what matters and what does not)
+2) Assumption ledger (explicit assumptions only)
+3) Risk topology (interdependencies between top risks)
+4) Portfolio allocation proposal (people, budget, compute)
+5) 4-quarter roadmap with checkpoints
+6) Execution governance model
+7) KPI stack with leading/lagging indicators
+8) Failure-mode playbook
+9) Scenario analysis (base, optimistic, stress)
+10) Decision package for leadership approval
+
+Constraints:
+- No external data or references.
+- Every recommendation must include expected impact and measurable signal.
+- Surface confidence level for each major claim.
+- Distinguish hard constraints from preferences.
+- Call out where short-term wins create long-term risk.
+
+Data appendix:
+- Consumer retention: day-1 strong, day-7 weak, day-30 weaker.
+- Enterprise pilots convert well when reliability proof is included.
+- Benchmarking workload peaks overlap with enterprise onboarding windows.
+- Incident review quality improved, but runbook coverage remains partial.
+- Two high-value enterprise accounts delayed payment due to procurement controls.
+- Internal tooling usage is high, but ownership model is unclear.
+- Team managers report planning overhead and decision latency as major productivity drains.
+
+Output format requirements:
+- Use clear headings and compact tables where useful.
+- Include a final “Decisions Required This Week” section.
+- Keep tone practical and non-promotional.
+
+Now produce the full memo.
