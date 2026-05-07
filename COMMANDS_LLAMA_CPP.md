@@ -22,14 +22,13 @@ export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_250.txt
 
 ---
 
-## 1) Normal run (balanced)
+## 1) Normal run (balanced, local)
 
 ```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
+  --backend local \
   --engine llama.cpp \
-  --hardware l4 \
   --configs 16 \
   --trials 10 \
   --score-profile balanced
@@ -37,14 +36,13 @@ sigilant-runner run \
 
 ---
 
-## 2) Normal run (quality profile)
+## 2) Normal run (quality profile, local)
 
 ```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
+  --backend local \
   --engine llama.cpp \
-  --hardware l4 \
   --configs 16 \
   --trials 10 \
   --score-profile quality
@@ -52,14 +50,13 @@ sigilant-runner run \
 
 ---
 
-## 3) Depth profile run (8k / 14k / 28k)
+## 3) Depth profile run (8k / 14k / 28k, local)
 
 ```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
+  --backend local \
   --engine llama.cpp \
-  --hardware l4 \
   --configs 16 \
   --trials 10 \
   --score-profile balanced \
@@ -71,14 +68,13 @@ sigilant-runner run \
 
 ---
 
-## 4) Normal run + Agent smoke
+## 4) Normal run + Agent smoke (local)
 
 ```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
+  --backend local \
   --engine llama.cpp \
-  --hardware l4 \
   --configs 16 \
   --trials 10 \
   --score-profile balanced \
@@ -87,14 +83,13 @@ sigilant-runner run \
 
 ---
 
-## 5) Depth profile + Agent smoke
+## 5) Depth profile + Agent smoke (local)
 
 ```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
+  --backend local \
   --engine llama.cpp \
-  --hardware l4 \
   --configs 16 \
   --trials 10 \
   --score-profile balanced \
@@ -107,7 +102,7 @@ sigilant-runner run \
 
 ---
 
-## 6) Local run (quick sanity)
+## 6) Local quick sanity
 
 ```bash
 sigilant-runner run \
@@ -121,14 +116,13 @@ sigilant-runner run \
 
 ---
 
-## 7) Higher confidence run
+## 7) Higher confidence run (local)
 
 ```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
+  --backend local \
   --engine llama.cpp \
-  --hardware l4 \
   --configs 16 \
   --trials 20 \
   --score-profile balanced \
@@ -137,7 +131,17 @@ sigilant-runner run \
 
 ---
 
-## 8) Output location
+## 8) Modal equivalents (optional)
+
+Add these flags to any command above when you want Modal instead of local:
+
+```bash
+--backend modal --hardware l4
+```
+
+---
+
+## 9) Output location
 
 Artifacts are written under:
 

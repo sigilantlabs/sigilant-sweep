@@ -1,80 +1,97 @@
 # Sigilant Runner
 
-Sigilant Runner is a GGUF config optimizer.
+GGUF config optimizer for `llama.cpp` with reproducible benchmarking on `local` and `modal`.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Recommended](https://img.shields.io/badge/recommended-python%203.11%2B-2ea44f)
 ![Engine](https://img.shields.io/badge/engine-llama.cpp-2ea44f)
 ![Backends](https://img.shields.io/badge/backends-local%20%7C%20modal-7a3cff)
-![Benchmark](https://img.shields.io/badge/modes-ranking%20%7C%20depth_profile-1f6feb)
+![Modes](https://img.shields.io/badge/modes-ranking%20%7C%20depth_profile-1f6feb)
 ![Status](https://img.shields.io/badge/status-vLLM%20coming%20soon-f59e0b)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Pick the best `llama.cpp` serving config by benchmarking quant, ctx, and kv settings with repeatable scoring and artifacts.
-
-This repo currently focuses on:
-- `llama.cpp` engine
-- `local` and `modal` backends
-
-Planned:
-- add `vLLM` and additional engines/backends in later releases
+This repo currently focuses on `llama.cpp`. vLLM and additional backends are planned in later releases.
 
 ## Quick Links
 
-- [3 Commands To First Result](#3-commands-to-first-result)
-- [Step-by-Step: Local Run](#step-by-step-local-run)
-- [Step-by-Step: Modal Run](#step-by-step-modal-run)
-- [Depth Profile Mode](#depth-profile-mode)
-- [Agent Smoke (5-check quick gate)](#agent-smoke-5-check-quick-gate)
+- [What This Does](#what-this-does)
+- [Path A: Local Quick Start](#path-a-local-quick-start)
+- [Path B: Modal Quick Start](#path-b-modal-quick-start)
+- [Depth Profile](#depth-profile)
+- [Agent Smoke](#agent-smoke-5-check-quick-gate)
 - [Troubleshooting](#troubleshooting)
-- [Appendix A: Installing llama.cpp / llama-cli](#appendix-a-installing-llamacpp--llama-cli)
+- [Appendix A: Install llama.cpp / llama-cli](#appendix-a-install-llamacpp--llama-cli)
 
-It runs a grid sweep, measures latency/throughput/quality, ranks configs, and writes run artifacts.
+## What This Does
 
-## What You Get
+For each config, runner measures:
+- `TPS` (tokens/sec)
+- `TTFT` (time to first token)
+- `ITL` (inter-token latency)
+- `PPL` (quality proxy)
 
-- 16-config default sweep across quant/ctx/kv regimes
-- multi-trial benchmarking with rotated trial starts
-- `TPS p50/p95`, `TTFT p50/p95`, `ITL`, and `PPL`
-- weighted score and winner selection
-- optional depth profile (8k/14k/28k prompts)
-- optional 5-case agent smoke gate
+It runs a config grid (default 16), aggregates trials, ranks results, and writes artifacts.
 
-## Quick Start (Choose one path)
+## Before You Start
 
-### Path A: Local backend (no Modal required)
+- Python `3.10+` is supported.
+- Python `3.11+` is recommended (smoother dependency installs, especially for Modal on Intel macOS).
+- If you run local backend, you need `llama-cli` available.
+
+## Path A: Local Quick Start
+
+Use this if you want to run on your own machine (no Modal needed).
 
 ```bash
 git clone https://github.com/sigilantlabs/sigilant-sweep.git
 cd sigilant-sweep
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
 pip install -e .
+pip install -U huggingface_hub
 export HF_TOKEN=hf_xxx
 export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
-
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
-  --engine llama.cpp \
-  --hardware l4 \
-  --configs 16 \
-  --trials 10 \
-  --score-profile balanced \
-  --agent-smoke
+llama-cli --version
 ```
 
-### Path B: Modal backend
+If `llama-cli --version` fails:
+
+```bash
+export SIGILANT_LLAMA_CLI=/absolute/path/to/llama-cli
+```
+
+Run:
+
+```bash
+sigilant-runner run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend local \
+  --engine llama.cpp \
+  --configs 16 \
+  --trials 3 \
+  --score-profile balanced
+```
+
+## Path B: Modal Quick Start
+
+Use this if you want cloud GPU runs.
 
 ```bash
 git clone https://github.com/sigilantlabs/sigilant-sweep.git
 cd sigilant-sweep
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
 pip install -e .
+pip install -U modal huggingface_hub
 modal setup
 export HF_TOKEN=hf_xxx
 export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
+```
 
+Run:
+
+```bash
 sigilant-runner run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend modal \
@@ -86,7 +103,11 @@ sigilant-runner run \
   --agent-smoke
 ```
 
-## 3 Commands To First Result (assuming setup already done)
+Note:
+- Modal often has a free credit tier for many users, but this policy can change.
+- Modal hardware is NVIDIA datacenter/enterprise GPU inventory.
+
+## 3 Commands To First Result (Assuming Setup Already Done)
 
 Local:
 
@@ -104,142 +125,9 @@ source .venv/bin/activate
 sigilant-runner run --model Qwen/Qwen2.5-1.5B-Instruct-GGUF --backend modal --engine llama.cpp --hardware l4 --configs 16 --trials 3 --score-profile balanced
 ```
 
-## Prerequisites
+## Depth Profile
 
-### 1) System
-
-- Python `3.10+`
-- `git`
-- internet access to Hugging Face and Modal APIs
-
-### 2) Repo setup
-
-```bash
-cd /path/to/sigilant-runner
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-What `pip install -e .` does:
-- installs this package in editable mode
-- installs Python dependencies from this repo
-
-What it does **not** do:
-- does not download GGUF models
-- does not install `llama.cpp` binaries
-- does not authenticate Modal
-
-### 3) Environment variables
-
-Recommended:
-```bash
-export HF_TOKEN=hf_xxx
-export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
-```
-
-Optional:
-```bash
-export SIGILANT_PPL_EVAL_CTX=1536
-```
-
-### 4) Backend-specific requirements
-
-#### Local backend
-
-You must have `llama-cli` available.
-
-Check:
-```bash
-llama-cli --version
-```
-
-If not in PATH:
-```bash
-export SIGILANT_LLAMA_CLI=/absolute/path/to/llama-cli
-```
-
-Installation options for `llama.cpp` / `llama-cli` are in [Appendix A](#appendix-a-installing-llamacpp--llama-cli).
-
-#### Modal backend
-
-You must authenticate Modal once on your machine:
-```bash
-modal setup
-```
-
-Run all modal commands from the same shell where `.venv` is active.
-
-Note:
-- Modal typically provides a monthly free credit tier for new/personal usage patterns (commonly cited as around `$30`, but policy can change).
-- Modal GPU catalog is NVIDIA datacenter/enterprise-class hardware, not consumer GPUs.
-
-## Step-by-Step: Local Run
-
-### A) Sanity run
-
-```bash
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend local \
-  --engine llama.cpp \
-  --configs 16 \
-  --trials 3 \
-  --score-profile balanced
-```
-
-### B) Production-strength run
-
-```bash
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend local \
-  --engine llama.cpp \
-  --configs 16 \
-  --trials 10 \
-  --score-profile balanced \
-  --agent-smoke
-```
-
-## Step-by-Step: Modal Run
-
-### A) Sanity run
-
-```bash
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
-  --engine llama.cpp \
-  --hardware l4 \
-  --configs 16 \
-  --trials 3 \
-  --score-profile balanced
-```
-
-### B) Production-strength run
-
-```bash
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
-  --engine llama.cpp \
-  --hardware l4 \
-  --configs 16 \
-  --trials 10 \
-  --score-profile balanced \
-  --agent-smoke
-```
-
-### C) If memory is tight
-
-Use stronger GPU:
-```bash
---hardware a10g
-```
-
-## Depth Profile Mode
-
-Use fixed prompt buckets to profile winners by context depth.
+Runs three prompt-depth passes and reports bucket winners.
 
 ```bash
 sigilant-runner run \
@@ -256,15 +144,16 @@ sigilant-runner run \
   --depth-prompt-28k prompts/hard_quality_28k_prompt.txt
 ```
 
-Depth output includes:
+Output includes:
 - `best_at_8k`
 - `best_at_14k`
 - `best_at_28k`
-- full per-bucket tables
+- per-bucket result tables
 
 ## Agent Smoke (5-check quick gate)
 
 Enable with:
+
 ```bash
 --agent-smoke
 ```
@@ -276,97 +165,100 @@ Checks:
 - basic refusal behavior
 - tool-arg JSON shape
 
-## Metrics and Scoring
+## Scoring and Trial Semantics
 
-Per config:
-- TPS p50, TPS p95
-- TTFT p50, TTFT p95
-- ITL
-- PPL (mean across successful trials)
+- Default profile: `balanced`
+- Balanced weights: `35% TPS + 25% TTFT + 40% PPL`
+- TPS/TTFT normalization uses `p95` (fallback to p50 if needed)
+- PPL is aggregated as mean across successful trials
 
-Current `balanced` score:
-- `35% TPS_norm + 25% TTFT_norm + 40% PPL_norm`
+Trials are **trial-first with rotated starts**:
+- each trial runs all configs once
+- start offset rotates per trial
+- final metrics aggregate per config across trials
 
-Normalization:
-- `TPS_norm = TPS p95 / max TPS p95`
-- `TTFT_norm = min TTFT p95 / TTFT p95`
-- `PPL_norm = min PPL / PPL`
+## Model Input
 
-If PPL is unavailable, score is renormalized over TPS/TTFT.
-
-## Trial Semantics (Important)
-
-Trials are **trial-first with rotated starts**.
-
-That means:
-- each trial runs the whole config set once
-- start index rotates each trial to reduce order bias
-- final metrics aggregate across trials per config
-
-This is intentionally not "run all trials for config-1, then config-2".
-
-## Model Input Rules
-
-`--model` expects Hugging Face GGUF repo ID.
+`--model` expects a Hugging Face GGUF repo.
 
 Examples:
 - `Qwen/Qwen2.5-1.5B-Instruct-GGUF`
 - `Qwen/Qwen2.5-7B-Instruct-GGUF`
 - `bartowski/Phi-3.5-mini-instruct-GGUF`
 
-Split GGUF shards are handled automatically (`00001-of-0000N` siblings).
+Split GGUF repos are supported (runner fetches sibling shards).
 
 ## Artifacts
 
-Each run writes:
+Each run writes to:
+
 `artifacts/runs/<run_id>/`
 
 Files:
-- `sigilant_results.json` (raw metrics, errors, preflight)
-- `sigilant_summary.md` (summary report)
-- `sigilant_frontier.svg` (chart)
-- `sigilant_terminal.txt` (terminal snapshot)
+- `sigilant_results.json`
+- `sigilant_summary.md`
+- `sigilant_frontier.svg`
+- `sigilant_terminal.txt`
 
 ## Troubleshooting
 
-### 1) All rows `FAILED`
+### 1) `modal is not installed`
+
+You’re running `--backend modal` without modal package in this venv.
+
+```bash
+pip install -U modal
+```
+
+### 2) `huggingface-hub is required to list models`
+
+```bash
+pip install -U huggingface_hub
+```
+
+### 3) Modal install fails on Intel macOS with `cbor2` / Rust error
+
+Typical error:
+- `error: can't find Rust compiler`
+
+Preferred fix:
+- use Python `3.11+` venv for this repo and reinstall.
+
+```bash
+deactivate 2>/dev/null || true
+rm -rf .venv
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
+pip install -e .
+pip install -U modal huggingface_hub
+```
+
+### 4) All rows `FAILED`
 
 Check:
-- model repo is GGUF and accessible
-- HF token is set
-- backend/hardware is valid
-- `llama-cli` exists (local backend)
+- model repo is valid GGUF repo
+- HF token available if rate-limited
+- backend/hardware pairing is valid
+- local path has working `llama-cli`
 
-### 2) Missing split shard error
-
-Symptom:
-- `failed to open ...-00002-of-...gguf`
-
-Action:
-- rerun once; runner now auto-fetches sibling shard set
-
-### 3) PPL shows `—`
+### 5) PPL is blank (`—`)
 
 Most common causes:
-- invalid/missing corpus file path
-- corpus too short for selected eval context
+- invalid `SIGILANT_PPL_CORPUS` path
+- corpus too short for configured eval context
 
-Action:
+Try:
+
 ```bash
 export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
 export SIGILANT_PPL_EVAL_CTX=1536
 ```
 
-### 4) Modal warns about unauthenticated HF requests
-
-Set:
-```bash
-export HF_TOKEN=hf_xxx
-```
-
-### 5) Winner confidence is low
+### 6) Winner confidence is low
 
 Increase trials:
+
 ```bash
 --trials 15
 ```
@@ -375,14 +267,33 @@ or
 --trials 20
 ```
 
+### 7) Clean local reset
+
+```bash
+deactivate 2>/dev/null || true
+rm -rf .venv
+```
+
+Then reinstall:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
+pip install -e .
+pip install -U huggingface_hub
+```
+
+Deleting this repo folder deletes only this repo’s `.venv`. Other virtual environments are unaffected.
+
 ## Additional Docs
 
 - Command recipes: [COMMANDS_LLAMA_CPP.md](./COMMANDS_LLAMA_CPP.md)
 - Internal execution flow: [LLAMACPP_INTERNAL_FLOW.md](./LLAMACPP_INTERNAL_FLOW.md)
 
-## Appendix A: Installing llama.cpp / llama-cli
+## Appendix A: Install llama.cpp / llama-cli
 
-You need a working `llama-cli` binary for local backend runs.
+You need `llama-cli` for local backend runs.
 
 ### Option 1: Build from source
 
@@ -396,18 +307,16 @@ cmake --build build -j
 
 Then either:
 - add `build/bin` to `PATH`, or
-- export explicit binary path:
+- set:
 
 ```bash
 export SIGILANT_LLAMA_CLI=/absolute/path/to/llama.cpp/build/bin/llama-cli
 ```
 
-### Option 2: Use an existing binary
+### Option 2: Existing binary
 
-If you already have `llama-cli` installed:
+If this works, no additional install is required:
 
 ```bash
 llama-cli --version
 ```
-
-If that command works, no extra install step is required.
