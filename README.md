@@ -46,8 +46,9 @@ Use backend-specific installs instead of one generic install:
 - do **not** install `modal` unless needed
 
 2) If you will run `--backend modal`:
-- use a Python 3.11 venv for best cross-platform reliability
-- then install `modal` + `huggingface_hub`
+- use Python `>= 3.11`
+- install `modal` + `huggingface_hub`
+- if `cbor2` wheel is unavailable on your platform, install Rust toolchain and retry
 
 Why:
 - Some transitive packages (for Modal stack) may not have prebuilt wheels on every OS/CPU/Python combination.
@@ -95,10 +96,10 @@ Use this if you want cloud GPU runs.
 Precheck (required for Modal path):
 
 ```bash
-python3.11 --version
+python3 -c "import sys; exit(0 if sys.version_info >= (3,11) else 1)" && python3 --version
 ```
 
-If that fails, install Python 3.11 first:
+If that fails, install Python 3.11+ first:
 
 - macOS (Homebrew):
 ```bash
@@ -116,7 +117,7 @@ Then continue:
 ```bash
 git clone https://github.com/sigilantlabs/sigilant-sweep.git
 cd sigilant-sweep
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 pip install -e .
@@ -124,6 +125,13 @@ pip install -U modal huggingface_hub
 modal setup
 export HF_TOKEN=hf_xxx
 export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
+```
+
+Intel Mac stable install path (recommended if generic install fails):
+
+```bash
+pip install -U "cbor2==5.7.1" "modal==1.3.1" huggingface_hub
+modal setup
 ```
 
 Run:
@@ -253,31 +261,53 @@ pip install -U modal
 pip install -U huggingface_hub
 ```
 
-### 3) Modal install fails on Intel macOS with `cbor2` / Rust error
+### 3) Modal install fails with `cbor2` / `can't find Rust compiler`
 
 Typical error:
 - `error: can't find Rust compiler`
 
-Preferred fix:
-- use Python `3.11+` venv for Modal path and reinstall.
+Preferred fix order:
+1) use Python `>= 3.11` venv
+2) retry install
+3) if still failing on Intel Mac, use pinned no-Rust fallback
+4) if you prefer latest Modal, install Rust toolchain and retry
 
 ```bash
 deactivate 2>/dev/null || true
 rm -rf .venv
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 pip install -e .
 pip install -U modal huggingface_hub
 ```
 
-Alternative (if you must stay on Python 3.10):
-- install Rust toolchain first, then install modal deps
-- this is slower and less predictable across machines
+Pinned no-Rust fallback (Intel Mac):
+```bash
+pip install -U "cbor2==5.7.1" "modal==1.3.1" huggingface_hub
+modal setup
+```
+
+If you want latest Modal and install still fails on `cbor2`, install Rust:
+
+macOS (Homebrew):
+```bash
+brew install rust
+```
+
+Then retry:
+```bash
+pip install -U modal huggingface_hub
+```
+
+Verify:
+```bash
+python -m pip show modal cbor2 huggingface_hub
+```
 
 Fast check:
 ```bash
-python3.11 --version
+python3 -c "import sys; print(sys.version)"
 ```
 
 ### 4) All rows `FAILED`

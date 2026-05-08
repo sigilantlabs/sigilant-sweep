@@ -144,12 +144,14 @@ def run(
         raise typer.Exit(1)
 
     # ── Grid ──────────────────────────────────────────────────────────────────
+    # Local backend needs concrete local file paths; modal backend needs repo+filename.
+    effective_model_repo = repo_id if backend == "modal" else ""
     grid = generate_grid(
         models=models,
         vram_gb=vram_gb,
         model_params_b=effective_params_b,
         max_configs=max_configs,
-        model_repo=repo_id,
+        model_repo=effective_model_repo,
         engine=engine,
     )
 
