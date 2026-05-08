@@ -245,6 +245,8 @@ Files:
 - `sigilant_frontier.svg`
 - `sigilant_terminal.txt`
 
+Sweep optimizes for speed and quality proxy. For capability validation (tool calling, SQL, structured output, agent safety) across your actual workload, see Sigilant Optimizer.
+
 ## Troubleshooting
 
 ### 1) `modal is not installed`
