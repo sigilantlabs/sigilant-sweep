@@ -328,6 +328,31 @@ class ModalBackend:
                             pp = subprocess.run(ppl_cmd, capture_output=True, text=True, timeout=120)
                             ptxt = (pp.stdout or "") + "\n" + (pp.stderr or "")
                             ppl_now = _parse_ppl(ptxt)
+                            # Retry once with reduced context when llama reports corpus-token shortfall.
+                            if ppl_now is None:
+                                m_have = re.search(r"tokenizes to only\s+(\d+)\s+tokens", ptxt, flags=re.IGNORECASE)
+                                if m_have:
+                                    have_tokens = int(m_have.group(1))
+                                    retry_ctx = max(128, (have_tokens // 2) - 32)
+                                    if retry_ctx < ppl_ctx:
+                                        retry_cmd = [
+                                            "/opt/llama.cpp/build/bin/llama-perplexity",
+                                            "-m", model_path,
+                                            "-ngl", "999",
+                                            "-c", str(int(retry_ctx)),
+                                            "-f", ppl_file,
+                                        ] + kv
+                                        pp_retry = subprocess.run(retry_cmd, capture_output=True, text=True, timeout=120)
+                                        retry_txt = (pp_retry.stdout or "") + "\n" + (pp_retry.stderr or "")
+                                        retry_ppl = _parse_ppl(retry_txt)
+                                        trial_log["llama_ppl_retry_ctx"] = int(retry_ctx)
+                                        trial_log["llama_ppl_retry_cmd"] = retry_cmd
+                                        trial_log["llama_ppl_retry_rc"] = int(pp_retry.returncode)
+                                        trial_log["llama_ppl_retry_stdout"] = pp_retry.stdout or ""
+                                        trial_log["llama_ppl_retry_stderr"] = pp_retry.stderr or ""
+                                        trial_log["llama_ppl_retry_parsed"] = retry_ppl
+                                        if isinstance(retry_ppl, (float, int)):
+                                            ppl_now = float(retry_ppl)
                             trial_log["llama_ppl_cmd"] = ppl_cmd
                             trial_log["llama_ppl_rc"] = int(pp.returncode)
                             trial_log["llama_ppl_stdout"] = pp.stdout or ""
@@ -369,8 +394,9 @@ class ModalBackend:
             print("[sigilant-runner] Sweep complete, returning results.")
             return json.dumps(out)
 
-        preferred_shared_ppl_path = Path(__file__).resolve().parents[2] / "prompts" / "hard_quality_8k_prompt.txt"
-        default_ppl_path = Path(__file__).resolve().parents[2] / "prompts" / "ppl_corpus_250.txt"
+        prompts_dir = Path(__file__).resolve().parents[2] / "prompts"
+        default_ppl_path = prompts_dir / "ppl_corpus_250.txt"
+        preferred_shared_ppl_path = prompts_dir / "hard_quality_8k_prompt.txt"
         ppl_corpus_override = os.environ.get("SIGILANT_PPL_CORPUS")
         ppl_corpus_text = ""
         try:
@@ -381,17 +407,37 @@ class ModalBackend:
                     f"[sigilant-runner] using PPL corpus from SIGILANT_PPL_CORPUS={ppl_corpus_override} "
                     f"chars={len(ppl_corpus_text)}"
                 )
+            elif default_ppl_path.is_file():
+                ppl_corpus_text = default_ppl_path.read_text(encoding="utf-8")
+                print(f"[sigilant-runner] using bundled PPL corpus {default_ppl_path} chars={len(ppl_corpus_text)}")
             elif preferred_shared_ppl_path.is_file():
                 ppl_corpus_text = preferred_shared_ppl_path.read_text(encoding="utf-8")
                 print(
                     f"[sigilant-runner] using shared PPL corpus {preferred_shared_ppl_path} "
                     f"chars={len(ppl_corpus_text)}"
                 )
-            elif default_ppl_path.is_file():
-                ppl_corpus_text = default_ppl_path.read_text(encoding="utf-8")
-                print(f"[sigilant-runner] using bundled PPL corpus {default_ppl_path} chars={len(ppl_corpus_text)}")
         except Exception as exc:
             print(f"[sigilant-runner] WARN: failed to load local PPL corpus: {exc}")
+        if ppl_corpus_text:
+            est_tokens = max(1, int(round(len(ppl_corpus_text) / 4.0)))
+            min_tokens = int(os.environ.get("SIGILANT_MIN_PPL_TOKENS", "1800"))
+            if est_tokens < min_tokens:
+                candidates = [os.environ.get("SIGILANT_PPL_CORPUS_FALLBACK"), str(default_ppl_path), str(preferred_shared_ppl_path)]
+                for candidate in candidates:
+                    if not candidate or not os.path.isfile(candidate):
+                        continue
+                    try:
+                        alt_text = Path(candidate).read_text(encoding="utf-8")
+                    except Exception:
+                        continue
+                    alt_tokens = max(1, int(round(len(alt_text) / 4.0)))
+                    if alt_tokens >= min_tokens:
+                        ppl_corpus_text = alt_text
+                        print(
+                            f"[sigilant-runner] PPL corpus too short ({est_tokens} est toks); "
+                            f"fallback={candidate} chars={len(ppl_corpus_text)}"
+                        )
+                        break
 
         payload = json.dumps(
             {
