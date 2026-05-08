@@ -245,7 +245,7 @@ Files:
 - `sigilant_frontier.svg`
 - `sigilant_terminal.txt`
 
-Sweep optimizes for speed and quality proxy. For capability validation (tool calling, SQL, structured output, agent safety) across your actual workload, see Sigilant Optimizer.
+Sweep optimizes for speed and quality proxy. For capability validation (tool calling, SQL, structured output, agent safety) across your actual workload, see [Sigilant Optimizer](https://sigilantlabs.com/app/new).
 
 ## Troubleshooting
 
