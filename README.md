@@ -1,28 +1,34 @@
+![Sigilant Sweep](docs/assets/hero.png)
+
 # sigilant-sweep
 
-Open-source LLM inference sweep. Measure TPS, TTFT, ITL, and PPL across 16 configurations on your own hardware — local GPU, Modal, or RunPod.
+Benchmark orchestration for LLM inference stacks (llama.cpp, vLLM): TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
 
-```
-sigilant-sweep · Mistral-7B-Instruct-v0.3 · RTX 4090 24GB · llama.cpp · 16 configs
+[![PyPI](https://img.shields.io/pypi/v/sigilant-sweep?style=for-the-badge)](https://pypi.org/project/sigilant-sweep/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-1f6feb?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/sigilantlabs/sigilant-sweep?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/stargazers)
+[![Sigilant Optimizer](https://img.shields.io/badge/Sigilant-Optimizer-0a7f5a?style=for-the-badge)](https://sigilantlabs.com/app/new)
 
-Config                                      TPS     TTFT    ITL     PPL    Score
-──────────────────────────────────────────────────────────────────────────────────
-Q5_K_M · ctx:16384 · kv:f16   · b:4        53.3    612ms   19.2ms  8.44   91  ← best
-Q5_K_M · ctx:8192  · kv:f16   · b:4        53.1    609ms   19.1ms  8.44   89
-Q4_K_M · ctx:16384 · kv:f16   · b:4        56.2    591ms   18.1ms  8.71   87
-Q4_K_M · ctx:8192  · kv:f16   · b:4        55.8    594ms   18.3ms  8.71   85
-... 12 more configs
+[Scope](#scope) • [Install](#install) • [First-time success](#first-time-success-guide) • [Metrics](#what-this-measures) • [Reproducibility](#verification-and-reproducibility)
 
-Best config:  Q5_K_M · ctx:16384 · kv:f16 · b:4
+---
+## Scope
 
-PPL is a quality proxy, not production validation.
+`sigilant-sweep` is orchestration and reporting around existing inference engines.
 
-! Agent safety NOT evaluated.
-  Structural JSON, tool calling, hallucination resistance,
-  and prompt injection are not covered by this sweep.
+It handles:
+- config generation
+- benchmark execution via adapters (`llama.cpp`, `vllm`)
+- metric parsing (TPS, TTFT, ITL, PPL proxy)
+- scoring and artifact export
 
-  → sigilantlabs.com/optimize
-```
+It is not a new inference runtime.
+
+## Non-goals
+
+- custom kernels or scheduler innovation
+- replacing engine internals (`llama.cpp`, `vllm`)
+- claiming production safety certification from throughput benchmarks
 
 ---
 
@@ -137,7 +143,7 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3
 sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --json
 ```
 
-## Quick wow path (2 minutes)
+## Quick run path
 
 ```bash
 sigilant-sweep run \
@@ -149,13 +155,13 @@ sigilant-sweep run \
   --agent-smoke
 ```
 
-You get:
-- ranked configs with deterministic winner
-- baseline delta line (speed and latency uplift)
+Output:
+- ranked configs with score and status
+- baseline delta line
 - `sigilant_results.json`, `sigilant_summary.md`, `sigilant_frontier.svg`
-- smoke diagnosis (`model_limited` vs `harness_limited` vs `mixed`)
+- optional smoke diagnosis (`model_limited` vs `harness_limited` vs `mixed`)
 
-Confidence guardrails:
+Stability notes:
 - Default is fixed `--trials 12` for stronger stability out of the box.
 - You can override `--trials` manually for faster/cheaper or deeper runs.
 - Artifacts include confidence inputs: top-2 gap and variance proxy.
@@ -257,6 +263,22 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod -
 - Long-context retrieval (NIAH)
 
 PPL catches gross quantization degradation. It does not validate production agent safety.
+
+Prompt corpus note:
+- Some benchmark prompts/corpora in `prompts/` were generated or expanded with LLM assistance and then manually reviewed/edited for this harness.
+- They are intended for relative configuration comparison, not as a standardized external evaluation set.
+
+## Verification and reproducibility
+
+- Keep raw artifacts with reported tables (`sigilant_results.json`, `sigilant_terminal.txt`).
+- Re-run top candidates with `--only-config` before final selection.
+- Separate infra/control-plane failures from model/runtime failures.
+- Treat PPL as a ranking proxy within comparable runs.
+
+See detailed docs:
+- `docs/architecture.md`
+- `docs/limitations.md`
+- `docs/reproducibility.md`
 
 ## vLLM status
 

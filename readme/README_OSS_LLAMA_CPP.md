@@ -1,6 +1,6 @@
 # llama.cpp on OSS/GitHub
 
-This guide is for users who clone the repo and run `llama.cpp` sweeps.
+This guide is for users who clone the repo and run `llama.cpp` sweeps on Modal.
 
 ## 1) Install
 
@@ -9,10 +9,17 @@ git clone https://github.com/<org>/sigilant-sweep.git
 cd sigilant-sweep
 python3.11 -m venv .venv
 source .venv/bin/activate
-python -m pip install -U pip setuptools wheel
-pip install -e .
-pip install "sigilant-sweep[modal]"
+python3 -m pip install -U pip setuptools wheel
+pip install ".[modal]"
 modal token new
+```
+
+If install fails with `Failed building wheel for cbor2`, run:
+
+```bash
+pip uninstall -y modal cbor2
+pip install --only-binary=:all: "cbor2==5.6.5"
+pip install ".[modal]"
 ```
 
 ## 2) Run llama.cpp on Modal (ranking only)
