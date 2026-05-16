@@ -1,6 +1,6 @@
-# llama.cpp Internal Flow (sigilant-runner-llamacpp)
+# llama.cpp Internal Flow (sigilant-sweep)
 
-This document describes the exact runtime flow for `sigilant-runner run --engine llama.cpp` in this repo.
+This document describes the exact runtime flow for `sigilant-sweep run --engine llama.cpp` in this repo.
 
 ## 1. CLI entry
 

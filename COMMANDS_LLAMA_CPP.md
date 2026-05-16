@@ -1,6 +1,6 @@
 # llama.cpp Command Recipes
 
-All commands below are for `sigilant-runner-llamacpp`.
+All commands below are for `sigilant-sweep`.
 
 ## 0) One-time setup (from repo root)
 
@@ -25,7 +25,7 @@ export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_250.txt
 ## 1) Normal run (balanced, local)
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
@@ -39,7 +39,7 @@ sigilant-runner run \
 ## 2) Normal run (quality profile, local)
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
@@ -53,7 +53,7 @@ sigilant-runner run \
 ## 3) Depth profile run (8k / 14k / 28k, local)
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
@@ -71,7 +71,7 @@ sigilant-runner run \
 ## 4) Normal run + Agent smoke (local)
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
@@ -86,7 +86,7 @@ sigilant-runner run \
 ## 5) Depth profile + Agent smoke (local)
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
@@ -105,7 +105,7 @@ sigilant-runner run \
 ## 6) Local quick sanity
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
@@ -119,7 +119,7 @@ sigilant-runner run \
 ## 7) Higher confidence run (local)
 
 ```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend local \
   --engine llama.cpp \
