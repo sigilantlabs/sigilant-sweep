@@ -1,49 +1,257 @@
-You are an operations analyst preparing a risk and execution brief for a cross-functional leadership review.
-Read the full context below and produce a response that is structured, precise, and internally consistent.
+You are an evaluation model. Read the full context carefully before answering.
 
-Context:
-This organization runs three product lines: consumer AI app, B2B workflow platform, and model-evaluation infrastructure.
-The board asked for one consolidated plan because operating costs rose 22% quarter-over-quarter while growth slowed.
-Leadership suspects the problem is not demand, but planning inconsistency between engineering, product, and go-to-market.
+Return ONLY valid JSON with this exact schema:
+{
+  "decision": "approve|reject|needs_review",
+  "top_risks": [{"id":"R-000","severity":"low|medium|high","reason":"..."}],
+  "evidence": [{"claim":"...","source_id":"S-0000"}],
+  "contradictions": [{"a":"S-0000","b":"S-0001","note":"..."}],
+  "final_summary": "..."
+}
 
-Known facts:
-1) Consumer AI app grew users but churn is concentrated in day-7 and day-30 cohorts.
-2) B2B platform has strong pilot conversion but long enterprise procurement cycles.
-3) Eval infrastructure has high usage by internal teams but no clear external monetization strategy.
-4) Incident response improved MTTR by 35%, but incident volume rose in the same period.
-5) Cloud GPU spend is peaky and often correlated with unplanned benchmark runs.
-6) Revenue recognition is healthy, but cash collection is delayed in two major accounts.
-7) Sales asks for faster feature commitments; engineering warns against roadmap overcommitment.
-8) Security team reports growing third-party risk from unmanaged integrations.
+Rules:
+1) Use only evidence from the context below.
+2) If two sources conflict, mention both in contradictions.
+3) Never invent IDs.
+4) Keep JSON compact and valid.
 
-You must deliver:
-- A concise executive summary (max 8 bullets).
-- Top 10 risks with severity, owner, and mitigation.
-- A 90-day execution plan with milestones and measurable outcomes.
-- A decision table: what to stop, start, continue.
-- A conflict map: where teams disagree and how to resolve.
-- A one-page metrics framework that avoids vanity KPIs.
+Context begins.
 
-Constraints:
-- Do not invent external facts.
-- If a claim depends on assumptions, state them explicitly.
-- Prioritize decisions with measurable impact in under 90 days.
-- Keep language direct and non-marketing.
-- Show tradeoffs where choices compete for the same resources.
+S-0001: Program Atlas uses staged rollout; gate-1 requires latency p95 under 1200ms.
+S-0002: Program Atlas uses staged rollout; gate-2 requires structured JSON validity at 99.5%.
+S-0003: Program Atlas change board note says k8v8 is allowed only when long-context need is proven.
+S-0004: Internal policy says any run with missing status fields is non-auditable until reconciled.
+S-0005: A model can pass speed and still fail deployment if confidence is low.
+S-0006: Inference note says TTFT variance above 15% across trials indicates unstable warm path.
+S-0007: Product note says winner must be chosen by composite score, not max TPS alone.
+S-0008: Compliance note says benchmark prompt provenance must include source path and hash.
+S-0009: Team memo says context stress is weak if prompt tokens are below half of max tested ctx.
+S-0010: Model-family note says FP16 and BF16 may converge on throughput when compute-bound.
+S-0011: Requirement A: keep final output machine-readable.
+S-0012: Requirement B: avoid unsafe tool-calling outputs.
+S-0013: Requirement C: report baseline deltas explicitly.
+S-0014: Requirement D: show top-2 gap and replay outcome in confidence inputs.
+S-0015: Requirement E: avoid hidden default changes between releases.
+S-0016: Requirement F: when using custom prompts, record character length and token estimate.
+S-0017: Requirement G: if all variants fail, return a non-launch recommendation.
+S-0018: Requirement H: if scores tie, use deterministic tie-breakers.
+S-0019: Requirement I: preserve per-run artifacts; do not overwrite history.
+S-0020: Requirement J: runner should emit terminal-friendly summary text.
+S-0021: Observation: run A had winner confidence 10.1%, classified high.
+S-0022: Observation: run B had prompt chars 11016 and token estimate around 2750.
+S-0023: Observation: run B showed near-identical TPS across ctx and kv variants.
+S-0024: Observation: this pattern can occur when prompt depth is too shallow for tested ctx.
+S-0025: Observation: JSON status fields missing can break downstream quality dashboards.
+S-0026: Observation: summary and terminal can still show winner even when JSON status is null.
+S-0027: Observation: this mismatch is a serialization defect, not a benchmark pass/fail defect.
+S-0028: Observation: preflight metadata should include quant bucket, quant method, kv type, model repo.
+S-0029: Observation: compressed-tensors repos may fail if forced quantization flag conflicts.
+S-0030: Observation: when model config has quantization_config, omit quantization CLI override.
+S-0031: Case note: k8v8 sometimes fails depending on engine kv-cache dtype compatibility.
+S-0032: Case note: int8 path succeeded after disabling incompatible kv-cache dtype forcing.
+S-0033: Case note: fp8 path failed on non-hopper GPUs due unsupported fp8 kernel types.
+S-0034: Case note: a10/l4 can run int8 and fp16 reliably with proper settings.
+S-0035: Case note: one-server-at-a-time restart pattern reduced startup conflicts.
+S-0036: Case note: p95 columns can be unavailable when trials are low.
+S-0037: Case note: low trials reduce confidence but can still rank top configs quickly.
+S-0038: Case note: adaptive replay can improve confidence if top-2 gap is narrow.
+S-0039: Case note: fixed trials mode should clearly mark replay as disabled.
+S-0040: Case note: agent smoke is a triage signal, not full production safety certification.
+S-0041: Risk R-101: conflicting report formats cause user mistrust.
+S-0042: Risk R-102: hidden failures in status serialization break automation.
+S-0043: Risk R-103: shallow prompts produce false equivalence across configs.
+S-0044: Risk R-104: over-aggressive kv settings can introduce unsupported runtime paths.
+S-0045: Risk R-105: missing provenance blocks auditability.
+S-0046: Risk R-106: deterministic ranking can still drift with unstable warmup behavior.
+S-0047: Risk R-107: selecting by speed only can degrade quality outcomes.
+S-0048: Risk R-108: using unsupported quant backends wastes GPU hours.
+S-0049: Risk R-109: graph clutter can hide key winner rationale.
+S-0050: Risk R-110: unbounded context claims without token-depth checks are misleading.
+S-0051: Control C-201: enforce JSON status pass/failed in artifact export.
+S-0052: Control C-202: always set top-level best_config in JSON.
+S-0053: Control C-203: include prompt source, chars, token-estimate, hash in summary.
+S-0054: Control C-204: print warning when token-estimate < 50% of max ctx.
+S-0055: Control C-205: maintain deterministic tie-break key order.
+S-0056: Control C-206: persist artifacts per run directory.
+S-0057: Control C-207: include baseline deltas in terminal and markdown.
+S-0058: Control C-208: include confidence inputs in markdown.
+S-0059: Control C-209: keep reproducible command in run context.
+S-0060: Control C-210: keep engine-specific behavior isolated by code path.
+S-0061: Constraint X-01: do not use evidence not present in context.
+S-0062: Constraint X-02: do not output markdown, text, or prose outside JSON.
+S-0063: Constraint X-03: do not include unknown risk IDs.
+S-0064: Constraint X-04: if insufficient evidence, choose needs_review.
+S-0065: Constraint X-05: top_risks must be at most 5 entries.
+S-0066: Constraint X-06: contradictions must include at least 1 item when conflicts exist.
+S-0067: Constraint X-07: cite source IDs in evidence.
+S-0068: Constraint X-08: summary should be under 120 words.
+S-0069: Constraint X-09: avoid repeating identical claims.
+S-0070: Constraint X-10: include at least one deployment recommendation.
+S-0071: Dataset row: project=atlas; region=ap-south; incident=none; trend=stable.
+S-0072: Dataset row: project=atlas; region=eu-west; incident=minor; trend=recovering.
+S-0073: Dataset row: project=atlas; region=us-east; incident=none; trend=stable.
+S-0074: Dataset row: project=orion; region=ap-south; incident=latency; trend=volatile.
+S-0075: Dataset row: project=orion; region=eu-west; incident=none; trend=stable.
+S-0076: Dataset row: project=orion; region=us-east; incident=schema; trend=recovering.
+S-0077: Dataset row: project=zenith; region=ap-south; incident=none; trend=stable.
+S-0078: Dataset row: project=zenith; region=eu-west; incident=none; trend=stable.
+S-0079: Dataset row: project=zenith; region=us-east; incident=none; trend=stable.
+S-0080: Dataset row: project=lyra; region=ap-south; incident=oom; trend=volatile.
+S-0081: Audit A-01 says run output must be self-consistent across JSON/MD/terminal.
+S-0082: Audit A-02 says status null is unacceptable for machine actioning.
+S-0083: Audit A-03 says best_config null is unacceptable when winner exists.
+S-0084: Audit A-04 says missing prompt hash weakens reproducibility.
+S-0085: Audit A-05 says runtime errors should capture startup tail.
+S-0086: Audit A-06 says preflight should record repo and quant method.
+S-0087: Audit A-07 says confidence target should be explicit.
+S-0088: Audit A-08 says replay reason should be explicit.
+S-0089: Audit A-09 says baseline source should be explicit.
+S-0090: Audit A-10 says product boundary note should be explicit.
+S-0091: Conflict C1: Memo M-14 claims k8v8 always faster than k16v16.
+S-0092: Conflict C2: Benchmark B-22 shows k8v8 slower in specific fp16 cases.
+S-0093: Conflict C3: Memo M-18 claims long ctx always better.
+S-0094: Conflict C4: Benchmark B-29 shows long ctx can increase TTFT without quality gain.
+S-0095: Conflict C5: Memo M-21 claims replay always improves confidence.
+S-0096: Conflict C6: Run R-31 shows replay disabled under fixed-trials mode.
+S-0097: Conflict C7: Memo M-23 claims prompt chars equal token count.
+S-0098: Conflict C8: tokenizer note says char/token ratio varies by content.
+S-0099: Conflict C9: Memo M-27 says no need for provenance if prompt file is known.
+S-0100: Conflict C10: audit requires recorded source and hash regardless.
+S-0101: Reference table entry 001: alpha=17 beta=92 gamma=low delta=ok
+S-0102: Reference table entry 002: alpha=18 beta=91 gamma=low delta=ok
+S-0103: Reference table entry 003: alpha=19 beta=90 gamma=low delta=ok
+S-0104: Reference table entry 004: alpha=20 beta=89 gamma=low delta=ok
+S-0105: Reference table entry 005: alpha=21 beta=88 gamma=low delta=ok
+S-0106: Reference table entry 006: alpha=22 beta=87 gamma=low delta=ok
+S-0107: Reference table entry 007: alpha=23 beta=86 gamma=low delta=ok
+S-0108: Reference table entry 008: alpha=24 beta=85 gamma=low delta=ok
+S-0109: Reference table entry 009: alpha=25 beta=84 gamma=low delta=ok
+S-0110: Reference table entry 010: alpha=26 beta=83 gamma=low delta=ok
+S-0111: Reference table entry 011: alpha=27 beta=82 gamma=low delta=ok
+S-0112: Reference table entry 012: alpha=28 beta=81 gamma=low delta=ok
+S-0113: Reference table entry 013: alpha=29 beta=80 gamma=low delta=ok
+S-0114: Reference table entry 014: alpha=30 beta=79 gamma=low delta=ok
+S-0115: Reference table entry 015: alpha=31 beta=78 gamma=low delta=ok
+S-0116: Reference table entry 016: alpha=32 beta=77 gamma=low delta=ok
+S-0117: Reference table entry 017: alpha=33 beta=76 gamma=low delta=ok
+S-0118: Reference table entry 018: alpha=34 beta=75 gamma=low delta=ok
+S-0119: Reference table entry 019: alpha=35 beta=74 gamma=low delta=ok
+S-0120: Reference table entry 020: alpha=36 beta=73 gamma=low delta=ok
+S-0121: Extended note E-001: Validation path one uses strict parser, fallback parser disabled.
+S-0122: Extended note E-002: Validation path two compares exported winner across channels.
+S-0123: Extended note E-003: Validation path three rejects runs with missing top-level winner.
+S-0124: Extended note E-004: Validation path four checks confidence metadata completeness.
+S-0125: Extended note E-005: Validation path five checks baseline delta presence.
+S-0126: Extended note E-006: Validation path six checks prompt provenance presence.
+S-0127: Extended note E-007: Validation path seven checks per-run artifact persistence.
+S-0128: Extended note E-008: Validation path eight checks error-tail capture.
+S-0129: Extended note E-009: Validation path nine checks deterministic tie-break stability.
+S-0130: Extended note E-010: Validation path ten checks score profile labeling.
+S-0131: Long ledger block 1: customer=a1, order=1001, region=ap, status=open, risk=medium, owner=qa.
+S-0132: Long ledger block 2: customer=a2, order=1002, region=eu, status=open, risk=low, owner=qa.
+S-0133: Long ledger block 3: customer=a3, order=1003, region=us, status=open, risk=high, owner=ops.
+S-0134: Long ledger block 4: customer=a4, order=1004, region=ap, status=open, risk=medium, owner=ops.
+S-0135: Long ledger block 5: customer=a5, order=1005, region=eu, status=open, risk=medium, owner=ops.
+S-0136: Long ledger block 6: customer=a6, order=1006, region=us, status=open, risk=low, owner=ml.
+S-0137: Long ledger block 7: customer=a7, order=1007, region=ap, status=open, risk=low, owner=ml.
+S-0138: Long ledger block 8: customer=a8, order=1008, region=eu, status=open, risk=medium, owner=ml.
+S-0139: Long ledger block 9: customer=a9, order=1009, region=us, status=mitigated, risk=low, owner=ml.
+S-0140: Long ledger block 10: customer=b1, order=1010, region=ap, status=open, risk=high, owner=sec.
+S-0141: Long ledger block 11: customer=b2, order=1011, region=eu, status=open, risk=high, owner=sec.
+S-0142: Long ledger block 12: customer=b3, order=1012, region=us, status=open, risk=medium, owner=sec.
+S-0143: Long ledger block 13: customer=b4, order=1013, region=ap, status=open, risk=low, owner=qa.
+S-0144: Long ledger block 14: customer=b5, order=1014, region=eu, status=open, risk=low, owner=qa.
+S-0145: Long ledger block 15: customer=b6, order=1015, region=us, status=open, risk=medium, owner=qa.
+S-0146: Long ledger block 16: customer=b7, order=1016, region=ap, status=open, risk=medium, owner=qa.
+S-0147: Long ledger block 17: customer=b8, order=1017, region=eu, status=open, risk=high, owner=ops.
+S-0148: Long ledger block 18: customer=b9, order=1018, region=us, status=open, risk=low, owner=ops.
+S-0149: Long ledger block 19: customer=c1, order=1019, region=ap, status=open, risk=low, owner=ops.
+S-0150: Long ledger block 20: customer=c2, order=1020, region=eu, status=open, risk=medium, owner=ops.
+S-0151: Replicated governance paragraph A:
+S-0152: Replicated governance paragraph B:
+S-0153: Replicated governance paragraph C:
+S-0154: Replicated governance paragraph D:
+S-0155: Replicated governance paragraph E:
+S-0156: Replicated governance paragraph F:
+S-0157: Replicated governance paragraph G:
+S-0158: Replicated governance paragraph H:
+S-0159: Replicated governance paragraph I:
+S-0160: Replicated governance paragraph J:
+S-0161: Synthetic narrative section 01:
+S-0162: Synthetic narrative section 02:
+S-0163: Synthetic narrative section 03:
+S-0164: Synthetic narrative section 04:
+S-0165: Synthetic narrative section 05:
+S-0166: Synthetic narrative section 06:
+S-0167: Synthetic narrative section 07:
+S-0168: Synthetic narrative section 08:
+S-0169: Synthetic narrative section 09:
+S-0170: Synthetic narrative section 10:
+S-0171: Repetition block R1:
+S-0172: Repetition block R2:
+S-0173: Repetition block R3:
+S-0174: Repetition block R4:
+S-0175: Repetition block R5:
+S-0176: Repetition block R6:
+S-0177: Repetition block R7:
+S-0178: Repetition block R8:
+S-0179: Repetition block R9:
+S-0180: Repetition block R10:
+S-0181: Memory stress row 001 key=K-001 value=7721 tag=alpha note=track
+S-0182: Memory stress row 002 key=K-002 value=7722 tag=alpha note=track
+S-0183: Memory stress row 003 key=K-003 value=7723 tag=alpha note=track
+S-0184: Memory stress row 004 key=K-004 value=7724 tag=alpha note=track
+S-0185: Memory stress row 005 key=K-005 value=7725 tag=alpha note=track
+S-0186: Memory stress row 006 key=K-006 value=7726 tag=alpha note=track
+S-0187: Memory stress row 007 key=K-007 value=7727 tag=alpha note=track
+S-0188: Memory stress row 008 key=K-008 value=7728 tag=alpha note=track
+S-0189: Memory stress row 009 key=K-009 value=7729 tag=alpha note=track
+S-0190: Memory stress row 010 key=K-010 value=7730 tag=alpha note=track
+S-0191: Memory stress row 011 key=K-011 value=7731 tag=alpha note=track
+S-0192: Memory stress row 012 key=K-012 value=7732 tag=alpha note=track
+S-0193: Memory stress row 013 key=K-013 value=7733 tag=alpha note=track
+S-0194: Memory stress row 014 key=K-014 value=7734 tag=alpha note=track
+S-0195: Memory stress row 015 key=K-015 value=7735 tag=alpha note=track
+S-0196: Memory stress row 016 key=K-016 value=7736 tag=alpha note=track
+S-0197: Memory stress row 017 key=K-017 value=7737 tag=alpha note=track
+S-0198: Memory stress row 018 key=K-018 value=7738 tag=alpha note=track
+S-0199: Memory stress row 019 key=K-019 value=7739 tag=alpha note=track
+S-0200: Memory stress row 020 key=K-020 value=7740 tag=alpha note=track
+S-0201: Memory stress row 021 key=K-021 value=7741 tag=beta note=track
+S-0202: Memory stress row 022 key=K-022 value=7742 tag=beta note=track
+S-0203: Memory stress row 023 key=K-023 value=7743 tag=beta note=track
+S-0204: Memory stress row 024 key=K-024 value=7744 tag=beta note=track
+S-0205: Memory stress row 025 key=K-025 value=7745 tag=beta note=track
+S-0206: Memory stress row 026 key=K-026 value=7746 tag=beta note=track
+S-0207: Memory stress row 027 key=K-027 value=7747 tag=beta note=track
+S-0208: Memory stress row 028 key=K-028 value=7748 tag=beta note=track
+S-0209: Memory stress row 029 key=K-029 value=7749 tag=beta note=track
+S-0210: Memory stress row 030 key=K-030 value=7750 tag=beta note=track
+S-0211: Memory stress row 031 key=K-031 value=7751 tag=beta note=track
+S-0212: Memory stress row 032 key=K-032 value=7752 tag=beta note=track
+S-0213: Memory stress row 033 key=K-033 value=7753 tag=beta note=track
+S-0214: Memory stress row 034 key=K-034 value=7754 tag=beta note=track
+S-0215: Memory stress row 035 key=K-035 value=7755 tag=beta note=track
+S-0216: Memory stress row 036 key=K-036 value=7756 tag=beta note=track
+S-0217: Memory stress row 037 key=K-037 value=7757 tag=beta note=track
+S-0218: Memory stress row 038 key=K-038 value=7758 tag=beta note=track
+S-0219: Memory stress row 039 key=K-039 value=7759 tag=beta note=track
+S-0220: Memory stress row 040 key=K-040 value=7760 tag=beta note=track
+S-0221: Validation marker VM-01: contradictory claims exist for k8v8 performance.
+S-0222: Validation marker VM-02: contradictory claims exist for replay behavior.
+S-0223: Validation marker VM-03: contradictory claims exist for prompt depth assumptions.
+S-0224: Validation marker VM-04: contradictory claims exist for status serialization correctness.
+S-0225: Validation marker VM-05: contradictory claims exist for baseline completeness.
+S-0226: Validation marker VM-06: contradictory claims exist for graph readability sufficiency.
+S-0227: Validation marker VM-07: contradictory claims exist for quantization forcing policy.
+S-0228: Validation marker VM-08: contradictory claims exist for long-context benefit assumptions.
+S-0229: Validation marker VM-09: contradictory claims exist for confidence interpretation.
+S-0230: Validation marker VM-10: contradictory claims exist for artifact trustworthiness.
+S-0231: Final instruction reminder:
+S-0232: Final instruction reminder:
+S-0233: Final instruction reminder:
+S-0234: Final instruction reminder: if evidence is missing, return needs_review.
+S-0235: Final instruction reminder: keep all IDs traceable and deterministic.
 
-Additional material:
-The consumer app team proposes aggressive A/B expansion and daily model refreshes.
-Platform team proposes fewer launches but deeper enterprise features and stronger reliability SLAs.
-Infra team proposes consolidating benchmark pipelines and enforcing budgeted experiment windows.
-Finance proposes tighter spend controls and staged approval thresholds for any non-customer-facing compute.
-People ops notes elevated attrition risk in SRE and data engineering due to sustained on-call pressure.
-
-Requested output style:
-1) Executive summary
-2) Risk register
-3) 90-day plan
-4) Decision table
-5) Metrics framework
-6) Open questions
-
-Now provide the full response.
+Final task:
+Given all sources above, output the required JSON only.

@@ -1,64 +1,245 @@
-You are preparing a deep strategy memo for an executive operating review.
-The memo must integrate product, engineering, finance, sales, security, and operations.
+You are an evaluation model. Return ONLY valid JSON with schema: {"decision":"approve|reject|needs_review","top_risks":[],"evidence":[],"contradictions":[],"final_summary":""}.
+Rules: use cited IDs only, list contradictions, no prose outside JSON.
 
-Scenario:
-An AI company with three business units needs a 12-month operating plan.
-The board demands profitable growth while preserving innovation velocity.
-The company has uneven execution quality across teams and recurring planning conflicts.
+S-0001: Atlas evidence row 1. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0002: Atlas evidence row 2. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0003: Atlas evidence row 3. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0004: Atlas evidence row 4. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0005: Atlas evidence row 5. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0006: Atlas evidence row 6. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0007: Atlas evidence row 7. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0008: Atlas evidence row 8. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0009: Atlas evidence row 9. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0010: Atlas evidence row 10. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0011: Atlas evidence row 11. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0012: Atlas evidence row 12. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0013: Atlas evidence row 13. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0014: Atlas evidence row 14. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0015: Atlas evidence row 15. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0016: Atlas evidence row 16. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0017: Atlas evidence row 17. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0018: Atlas evidence row 18. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0019: Atlas evidence row 19. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0020: Atlas evidence row 20. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0021: Atlas evidence row 21. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0022: Atlas evidence row 22. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0023: Atlas evidence row 23. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0024: Atlas evidence row 24. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0025: Atlas evidence row 25. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0026: Atlas evidence row 26. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0027: Atlas evidence row 27. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0028: Atlas evidence row 28. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0029: Atlas evidence row 29. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0030: Atlas evidence row 30. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0031: Atlas evidence row 31. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0032: Atlas evidence row 32. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0033: Atlas evidence row 33. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0034: Atlas evidence row 34. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0035: Atlas evidence row 35. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0036: Atlas evidence row 36. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0037: Atlas evidence row 37. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0038: Atlas evidence row 38. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0039: Atlas evidence row 39. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0040: Atlas evidence row 40. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0041: Atlas evidence row 41. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0042: Atlas evidence row 42. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0043: Atlas evidence row 43. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0044: Atlas evidence row 44. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0045: Atlas evidence row 45. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0046: Atlas evidence row 46. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0047: Atlas evidence row 47. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0048: Atlas evidence row 48. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0049: Atlas evidence row 49. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0050: Atlas evidence row 50. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0051: Atlas evidence row 51. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0052: Atlas evidence row 52. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0053: Atlas evidence row 53. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0054: Atlas evidence row 54. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0055: Atlas evidence row 55. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0056: Atlas evidence row 56. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0057: Atlas evidence row 57. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0058: Atlas evidence row 58. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0059: Atlas evidence row 59. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0060: Atlas evidence row 60. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0061: Atlas evidence row 61. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0062: Atlas evidence row 62. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0063: Atlas evidence row 63. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0064: Atlas evidence row 64. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0065: Atlas evidence row 65. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0066: Atlas evidence row 66. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0067: Atlas evidence row 67. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0068: Atlas evidence row 68. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0069: Atlas evidence row 69. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0070: Atlas evidence row 70. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0071: Atlas evidence row 71. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0072: Atlas evidence row 72. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0073: Atlas evidence row 73. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0074: Atlas evidence row 74. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0075: Atlas evidence row 75. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0076: Atlas evidence row 76. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0077: Atlas evidence row 77. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0078: Atlas evidence row 78. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0079: Atlas evidence row 79. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0080: Atlas evidence row 80. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0081: Atlas evidence row 81. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0082: Atlas evidence row 82. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0083: Atlas evidence row 83. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0084: Atlas evidence row 84. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0085: Atlas evidence row 85. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0086: Atlas evidence row 86. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0087: Atlas evidence row 87. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0088: Atlas evidence row 88. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0089: Atlas evidence row 89. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0090: Atlas evidence row 90. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0091: Atlas evidence row 91. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0092: Atlas evidence row 92. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0093: Atlas evidence row 93. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0094: Atlas evidence row 94. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0095: Atlas evidence row 95. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0096: Atlas evidence row 96. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0097: Atlas evidence row 97. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0098: Atlas evidence row 98. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0099: Atlas evidence row 99. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0100: Atlas evidence row 100. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0101: Atlas evidence row 101. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0102: Atlas evidence row 102. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0103: Atlas evidence row 103. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0104: Atlas evidence row 104. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0105: Atlas evidence row 105. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0106: Atlas evidence row 106. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0107: Atlas evidence row 107. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0108: Atlas evidence row 108. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0109: Atlas evidence row 109. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0110: Atlas evidence row 110. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0111: Atlas evidence row 111. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0112: Atlas evidence row 112. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0113: Atlas evidence row 113. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0114: Atlas evidence row 114. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0115: Atlas evidence row 115. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0116: Atlas evidence row 116. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0117: Atlas evidence row 117. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0118: Atlas evidence row 118. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0119: Atlas evidence row 119. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0120: Atlas evidence row 120. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0121: Atlas evidence row 121. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0122: Atlas evidence row 122. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0123: Atlas evidence row 123. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0124: Atlas evidence row 124. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0125: Atlas evidence row 125. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0126: Atlas evidence row 126. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0127: Atlas evidence row 127. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0128: Atlas evidence row 128. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0129: Atlas evidence row 129. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0130: Atlas evidence row 130. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0131: Atlas evidence row 131. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0132: Atlas evidence row 132. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0133: Atlas evidence row 133. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0134: Atlas evidence row 134. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0135: Atlas evidence row 135. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0136: Atlas evidence row 136. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0137: Atlas evidence row 137. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0138: Atlas evidence row 138. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0139: Atlas evidence row 139. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0140: Atlas evidence row 140. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0141: Atlas evidence row 141. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0142: Atlas evidence row 142. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0143: Atlas evidence row 143. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0144: Atlas evidence row 144. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0145: Atlas evidence row 145. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0146: Atlas evidence row 146. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0147: Atlas evidence row 147. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0148: Atlas evidence row 148. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0149: Atlas evidence row 149. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0150: Atlas evidence row 150. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0151: Atlas evidence row 151. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0152: Atlas evidence row 152. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0153: Atlas evidence row 153. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0154: Atlas evidence row 154. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0155: Atlas evidence row 155. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0156: Atlas evidence row 156. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0157: Atlas evidence row 157. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0158: Atlas evidence row 158. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0159: Atlas evidence row 159. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0160: Atlas evidence row 160. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0161: Atlas evidence row 161. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0162: Atlas evidence row 162. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0163: Atlas evidence row 163. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0164: Atlas evidence row 164. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0165: Atlas evidence row 165. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0166: Atlas evidence row 166. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0167: Atlas evidence row 167. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0168: Atlas evidence row 168. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0169: Atlas evidence row 169. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0170: Atlas evidence row 170. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0171: Atlas evidence row 171. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0172: Atlas evidence row 172. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0173: Atlas evidence row 173. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0174: Atlas evidence row 174. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0175: Atlas evidence row 175. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0176: Atlas evidence row 176. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0177: Atlas evidence row 177. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0178: Atlas evidence row 178. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0179: Atlas evidence row 179. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0180: Atlas evidence row 180. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0181: Atlas evidence row 181. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0182: Atlas evidence row 182. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0183: Atlas evidence row 183. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0184: Atlas evidence row 184. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0185: Atlas evidence row 185. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0186: Atlas evidence row 186. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0187: Atlas evidence row 187. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0188: Atlas evidence row 188. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0189: Atlas evidence row 189. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0190: Atlas evidence row 190. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0191: Atlas evidence row 191. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0192: Atlas evidence row 192. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0193: Atlas evidence row 193. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0194: Atlas evidence row 194. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0195: Atlas evidence row 195. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0196: Atlas evidence row 196. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0197: Atlas evidence row 197. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0198: Atlas evidence row 198. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0199: Atlas evidence row 199. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0200: Atlas evidence row 200. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0201: Atlas evidence row 201. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0202: Atlas evidence row 202. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0203: Atlas evidence row 203. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0204: Atlas evidence row 204. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0205: Atlas evidence row 205. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0206: Atlas evidence row 206. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0207: Atlas evidence row 207. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0208: Atlas evidence row 208. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0209: Atlas evidence row 209. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0210: Atlas evidence row 210. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0211: Atlas evidence row 211. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0212: Atlas evidence row 212. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0213: Atlas evidence row 213. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0214: Atlas evidence row 214. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0215: Atlas evidence row 215. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0216: Atlas evidence row 216. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0217: Atlas evidence row 217. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0218: Atlas evidence row 218. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0219: Atlas evidence row 219. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0220: Atlas evidence row 220. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0221: Atlas evidence row 221. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0222: Atlas evidence row 222. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0223: Atlas evidence row 223. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0224: Atlas evidence row 224. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0225: Atlas evidence row 225. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0226: Atlas evidence row 226. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0227: Atlas evidence row 227. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0228: Atlas evidence row 228. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0229: Atlas evidence row 229. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0230: Atlas evidence row 230. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0231: Atlas evidence row 231. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0232: Atlas evidence row 232. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0233: Atlas evidence row 233. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0234: Atlas evidence row 234. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0235: Atlas evidence row 235. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0236: Atlas evidence row 236. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0237: Atlas evidence row 237. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0238: Atlas evidence row 238. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0239: Atlas evidence row 239. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
+S-0240: Atlas evidence row 240. Preserve source IDs, report contradictions, keep compact JSON output, and apply reliability>quality>speed>cost prioritization. Include provenance and deterministic reasoning under long-context pressure.
 
-Business units:
-1) Consumer assistant product
-2) Enterprise workflow platform
-3) Model benchmarking and optimization tooling
-
-Current state signals:
-- Revenue grew modestly, but gross margin narrowed.
-- GPU cost volatility increased due to ad-hoc experiments.
-- Reliability metrics improved in two services, regressed in one.
-- Customer support escalations are down overall but up for enterprise incidents.
-- Sales pipeline value increased, but average cycle length also increased.
-- Security findings are mostly medium severity, concentrated in integration surfaces.
-- Hiring plans are approved, but key roles remain unfilled.
-- Data quality issues caused at least two misreported KPI incidents.
-
-Cross-team friction points:
-- Product wants faster release cadence; platform reliability team wants stronger release gates.
-- Sales pushes custom commitments; engineering asks for strict template-based contracts.
-- Finance asks for cost envelopes by team; experimentation owners resist hard caps.
-- Security requires integration reviews; partner team claims reviews delay activation.
-
-Task:
-Create a complete operating memo with the following sections:
-1) Context summary (what matters and what does not)
-2) Assumption ledger (explicit assumptions only)
-3) Risk topology (interdependencies between top risks)
-4) Portfolio allocation proposal (people, budget, compute)
-5) 4-quarter roadmap with checkpoints
-6) Execution governance model
-7) KPI stack with leading/lagging indicators
-8) Failure-mode playbook
-9) Scenario analysis (base, optimistic, stress)
-10) Decision package for leadership approval
-
-Constraints:
-- No external data or references.
-- Every recommendation must include expected impact and measurable signal.
-- Surface confidence level for each major claim.
-- Distinguish hard constraints from preferences.
-- Call out where short-term wins create long-term risk.
-
-Data appendix:
-- Consumer retention: day-1 strong, day-7 weak, day-30 weaker.
-- Enterprise pilots convert well when reliability proof is included.
-- Benchmarking workload peaks overlap with enterprise onboarding windows.
-- Incident review quality improved, but runbook coverage remains partial.
-- Two high-value enterprise accounts delayed payment due to procurement controls.
-- Internal tooling usage is high, but ownership model is unclear.
-- Team managers report planning overhead and decision latency as major productivity drains.
-
-Output format requirements:
-- Use clear headings and compact tables where useful.
-- Include a final “Decisions Required This Week” section.
-- Keep tone practical and non-promotional.
-
-Now produce the full memo.
+Final task: return compact valid JSON only.
