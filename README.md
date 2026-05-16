@@ -56,6 +56,71 @@ pip install 'sigilant-sweep[all]'
 
 ---
 
+## First-time success guide
+
+### Golden path: Modal (recommended)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -U pip setuptools wheel
+pip install "sigilant-sweep[modal]"
+modal token new
+sigilant-sweep info
+```
+
+Run a cheap sanity test:
+
+```bash
+sigilant-sweep run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend modal \
+  --engine llama.cpp \
+  --hardware l4 \
+  --configs 1 \
+  --trials 1
+```
+
+### Golden path: Local llama.cpp
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -U pip setuptools wheel
+pip install sigilant-sweep
+```
+
+Requirements:
+- `llama-cli` must be installed and discoverable on `PATH`, or set `SIGILANT_LLAMA_CLI=/abs/path/to/llama-cli`.
+- Local backend is compute-dependent; on CPU-only machines it will be slow.
+
+### Compatibility matrix (current recommendation)
+
+| Scenario | Recommended install | Notes |
+|---|---|---|
+| Any OS, Modal-only | `pip install "sigilant-sweep[modal]"` | Best first-run success path |
+| Any OS, HF-only | `pip install "sigilant-sweep[hf]"` | For model listing/download integration |
+| Local llama.cpp | `pip install sigilant-sweep` | Requires external `llama-cli` binary |
+| Local vLLM | `pip install "sigilant-sweep[vllm]"` | Linux + CUDA only |
+
+### Known install issue (Intel macOS + Modal extras)
+
+If you see `Failed building wheel for cbor2`:
+
+```bash
+pip uninstall -y modal cbor2
+pip install --only-binary=:all: "cbor2==5.6.5"
+pip install "sigilant-sweep[modal]"
+```
+
+Then verify:
+
+```bash
+python3 -c "import modal, cbor2; print('modal', modal.__version__, 'cbor2_ok', hasattr(cbor2, 'dumps'))"
+```
+
+---
+
 ## Quick start
 
 ```bash

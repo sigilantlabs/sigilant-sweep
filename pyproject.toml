@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sigilant-sweep"
-version = "0.1.0"
+version = "0.1.1"
 description = "Open-source LLM inference sweep — TPS, TTFT, ITL, PPL across 16 configs on your hardware."
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -18,11 +18,16 @@ dependencies = [
 hf = ["huggingface-hub>=0.23.0"]
 llama  = ["llama-cpp-python>=0.2.90", "huggingface-hub>=0.23.0"]
 vllm   = ["vllm>=0.4.3",              "huggingface-hub>=0.23.0"]
-modal  = ["modal>=0.64.0",            "huggingface-hub>=0.23.0"]
+modal  = [
+    "modal==1.4.2",
+    "huggingface-hub>=0.23.0",
+    "cbor2==5.6.5",
+]
 runpod = ["runpod>=1.7.0",            "huggingface-hub>=0.23.0"]
 all = [
-    "modal>=0.64.0",
+    "modal==1.4.2",
     "huggingface-hub>=0.23.0",
+    "cbor2==5.6.5",
     "llama-cpp-python>=0.2.90",
     "vllm>=0.4.3",
     "runpod>=1.7.0",
