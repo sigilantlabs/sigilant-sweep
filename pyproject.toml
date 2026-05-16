@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "sigilant-runner"
+name = "sigilant-sweep"
 version = "0.1.0"
 description = "Open-source LLM inference sweep — TPS, TTFT, ITL, PPL across 16 configs on your hardware."
 readme = "README.md"
@@ -15,12 +15,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+hf = ["huggingface-hub>=0.23.0"]
 llama  = ["llama-cpp-python>=0.2.90", "huggingface-hub>=0.23.0"]
+vllm   = ["vllm>=0.4.3",              "huggingface-hub>=0.23.0"]
 modal  = ["modal>=0.64.0",            "huggingface-hub>=0.23.0"]
+runpod = ["runpod>=1.7.0",            "huggingface-hub>=0.23.0"]
 all = [
-    "llama-cpp-python>=0.2.90",
     "modal>=0.64.0",
     "huggingface-hub>=0.23.0",
+    "llama-cpp-python>=0.2.90",
+    "vllm>=0.4.3",
+    "runpod>=1.7.0",
 ]
 dev = [
     "pytest>=8.0.0",
@@ -28,6 +33,7 @@ dev = [
 ]
 
 [project.scripts]
+sigilant-sweep = "sigilant_runner.cli:app"
 sigilant-runner = "sigilant_runner.cli:app"
 
 [tool.hatch.build.targets.wheel]

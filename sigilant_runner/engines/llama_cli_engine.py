@@ -89,7 +89,7 @@ class LlamaCLIEngine:
             "--top-k", "1",
             "--seed", "42",
             "-t", "6",
-            "-n", "256",
+            "-n", "128",
             "--ctx-size", str(config.context),
             "--simple-io",
             *kv_args,

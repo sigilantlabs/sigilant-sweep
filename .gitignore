@@ -9,5 +9,4 @@ venv/
 *.gguf
 sigilant_results.json
 .ruff_cache/
-artifacts/
 .DS_Store

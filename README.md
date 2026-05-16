@@ -1,400 +1,226 @@
-# Sigilant Runner
+# sigilant-sweep
 
-GGUF config optimizer for `llama.cpp` with reproducible benchmarking on `local` and `modal`.
+Open-source LLM inference sweep. Measure TPS, TTFT, ITL, and PPL across 16 configurations on your own hardware — local GPU, Modal, or RunPod.
 
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![Recommended](https://img.shields.io/badge/recommended-python%203.11%2B-2ea44f)
-![Engine](https://img.shields.io/badge/engine-llama.cpp-2ea44f)
-![Backends](https://img.shields.io/badge/backends-local%20%7C%20modal-7a3cff)
-![Modes](https://img.shields.io/badge/modes-ranking%20%7C%20depth_profile-1f6feb)
-![Status](https://img.shields.io/badge/status-vLLM%20coming%20soon-f59e0b)
+```
+sigilant-sweep · Mistral-7B-Instruct-v0.3 · RTX 4090 24GB · llama.cpp · 16 configs
 
-This repo currently focuses on `llama.cpp`. vLLM and additional backends are planned in later releases.
+Config                                      TPS     TTFT    ITL     PPL    Score
+──────────────────────────────────────────────────────────────────────────────────
+Q5_K_M · ctx:16384 · kv:f16   · b:4        53.3    612ms   19.2ms  8.44   91  ← best
+Q5_K_M · ctx:8192  · kv:f16   · b:4        53.1    609ms   19.1ms  8.44   89
+Q4_K_M · ctx:16384 · kv:f16   · b:4        56.2    591ms   18.1ms  8.71   87
+Q4_K_M · ctx:8192  · kv:f16   · b:4        55.8    594ms   18.3ms  8.71   85
+... 12 more configs
 
-## Quick Links
+Best config:  Q5_K_M · ctx:16384 · kv:f16 · b:4
 
-- [What This Does](#what-this-does)
-- [Path A: Local Quick Start](#path-a-local-quick-start)
-- [Path B: Modal Quick Start](#path-b-modal-quick-start)
-- [Depth Profile](#depth-profile)
-- [Agent Smoke](#agent-smoke-5-check-quick-gate)
-- [Troubleshooting](#troubleshooting)
-- [Appendix A: Install llama.cpp / llama-cli](#appendix-a-install-llamacpp--llama-cli)
+PPL is a quality proxy, not production validation.
 
-## What This Does
+! Agent safety NOT evaluated.
+  Structural JSON, tool calling, hallucination resistance,
+  and prompt injection are not covered by this sweep.
 
-For each config, runner measures:
-- `TPS` (tokens/sec)
-- `TTFT` (time to first token)
-- `ITL` (inter-token latency)
-- `PPL` (quality proxy)
-
-It runs a config grid (default 16), aggregates trials, ranks results, and writes artifacts.
-
-## Before You Start
-
-- Python `3.10+` is supported.
-- Python `3.11+` is recommended (smoother dependency installs, especially for Modal on Intel macOS).
-- If you run local backend, you need `llama-cli` available.
-
-## Universal Install Policy (Important)
-
-Use backend-specific installs instead of one generic install:
-
-1) If you will run `--backend local`:
-- install only base + `huggingface_hub`
-- do **not** install `modal` unless needed
-
-2) If you will run `--backend modal`:
-- use Python `>= 3.11`
-- install `modal` + `huggingface_hub`
-- if `cbor2` wheel is unavailable on your platform, install Rust toolchain and retry
-
-Why:
-- Some transitive packages (for Modal stack) may not have prebuilt wheels on every OS/CPU/Python combination.
-- `python -m pip install -U pip setuptools wheel` helps tooling, but it cannot create missing upstream wheels.
-
-## Path A: Local Quick Start
-
-Use this if you want to run on your own machine (no Modal needed).
-
-```bash
-git clone https://github.com/sigilantlabs/sigilant-sweep.git
-cd sigilant-sweep
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip setuptools wheel
-pip install -e .
-pip install -U huggingface_hub
-export HF_TOKEN=hf_xxx
-export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
-llama-cli --version
+  → sigilantlabs.com/optimize
 ```
 
-If `llama-cli --version` fails:
+---
+
+## Install
 
 ```bash
-export SIGILANT_LLAMA_CLI=/absolute/path/to/llama-cli
+# Base (lightweight CLI + reporting)
+pip install sigilant-sweep
+
+# Hugging Face integration only
+pip install 'sigilant-sweep[hf]'
+
+# With llama.cpp
+pip install 'sigilant-sweep[llama]'
+
+# With llama.cpp + CUDA acceleration
+CMAKE_ARGS="-DGGML_CUDA=on" pip install 'sigilant-sweep[llama]'
+
+# With vLLM (Linux + CUDA only)
+pip install 'sigilant-sweep[vllm]'
+
+# With Modal cloud backend
+pip install 'sigilant-sweep[modal]'
+
+# With RunPod cloud backend
+pip install 'sigilant-sweep[runpod]'
+
+# Everything
+pip install 'sigilant-sweep[all]'
 ```
 
-Run:
+---
+
+## Quick start
 
 ```bash
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend local \
-  --engine llama.cpp \
-  --configs 16 \
-  --trials 3 \
-  --score-profile balanced
+# 1. Check hardware and credentials
+sigilant-sweep setup
+
+# 2. Show what's detected on this machine
+sigilant-sweep info
+
+# 3. Run a sweep (local GPU, llama.cpp)
+sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3
+
+# 4. Save results to JSON
+sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --json
 ```
 
-## Path B: Modal Quick Start
-
-Use this if you want cloud GPU runs.
-
-Precheck (required for Modal path):
+## Quick wow path (2 minutes)
 
 ```bash
-python3 -c "import sys; exit(0 if sys.version_info >= (3,11) else 1)" && python3 --version
-```
-
-If that fails, install Python 3.11+ first:
-
-- macOS (Homebrew):
-```bash
-brew install python@3.11
-```
-- Ubuntu/Debian:
-```bash
-sudo apt-get update && sudo apt-get install -y python3.11 python3.11-venv
-```
-- Windows:
-Install Python 3.11 from python.org and ensure `python3.11`/`py -3.11` is available.
-
-Then continue:
-
-```bash
-git clone https://github.com/sigilantlabs/sigilant-sweep.git
-cd sigilant-sweep
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip setuptools wheel
-pip install -e .
-pip install -U modal huggingface_hub
-modal setup
-export HF_TOKEN=hf_xxx
-export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
-```
-
-Intel Mac stable install path (recommended if generic install fails):
-
-```bash
-pip install -U "cbor2==5.7.1" "modal==1.3.1" huggingface_hub
-modal setup
-```
-
-Run:
-
-```bash
-sigilant-runner run \
+sigilant-sweep run \
   --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
   --backend modal \
   --engine llama.cpp \
   --hardware l4 \
-  --configs 16 \
-  --trials 10 \
   --score-profile balanced \
   --agent-smoke
 ```
 
-Note:
-- Modal often has a free credit tier for many users, but this policy can change.
-- Modal hardware is NVIDIA datacenter/enterprise GPU inventory.
+You get:
+- ranked configs with deterministic winner
+- baseline delta line (speed and latency uplift)
+- `sigilant_results.json`, `sigilant_summary.md`, `sigilant_frontier.svg`
+- smoke diagnosis (`model_limited` vs `harness_limited` vs `mixed`)
 
-## 3 Commands To First Result (Assuming Setup Already Done)
+Confidence guardrails:
+- Default is fixed `--trials 12` for stronger stability out of the box.
+- You can override `--trials` manually for faster/cheaper or deeper runs.
+- Artifacts include confidence inputs: top-2 gap and variance proxy.
 
-Local:
+---
 
-```bash
-cd sigilant-sweep
-source .venv/bin/activate
-sigilant-runner run --model Qwen/Qwen2.5-1.5B-Instruct-GGUF --backend local --engine llama.cpp --configs 16 --trials 3 --score-profile balanced
+## Hardware options
+
+| Flag                       | Where it runs          |
+|----------------------------|------------------------|
+| `--backend local`          | Your machine (default) |
+| `--backend modal`          | Modal cloud (your account) |
+| `--backend runpod`         | RunPod cloud (your account) |
+
+| `--hardware` value  | GPU              | VRAM  |
+|---------------------|------------------|-------|
+| `auto`              | auto-detect      | —     |
+| `a10g`              | NVIDIA A10G      | 24 GB |
+| `a100`              | NVIDIA A100      | 40 GB |
+| `h100`              | NVIDIA H100      | 80 GB |
+| `l4`                | NVIDIA L4        | 24 GB |
+| `t4`                | NVIDIA T4        | 16 GB |
+| `rtx4090`           | RTX 4090         | 24 GB |
+| `rtx3090`           | RTX 3090         | 24 GB |
+| `rtxa6000`          | RTX A6000        | 48 GB |
+
+---
+
+## Engine options
+
+| Flag                 | Supported Backends           | Notes |
+|----------------------|------------------------------|-------|
+| `--engine llama.cpp` | `local`, `modal`, `runpod`   | GGUF-based flow |
+| `--engine vllm`      | `local`, `modal`             | Linux + CUDA required |
+
+---
+
+## Full CLI reference
+
+```
+sigilant-sweep run [OPTIONS]
+
+  --model      -m    HuggingFace repo ID or local .gguf path   [required]
+  --backend    -b    local | modal | runpod                     [default: local]
+  --engine     -e    llama.cpp | vllm                           [default: llama.cpp]
+  --hardware         GPU target (see table above)               [default: auto]
+  --params-b         Model size in billions (for VRAM estimate) [default: 7.0]
+  --configs          Max number of configs to sweep             [default: 16]
+  --confidence-target  low | medium | high                      [default: medium] (reporting only)
+  --score-profile      balanced | latency | quality             [default: balanced]
+  --trials             Trials per config                        [default: 12]
+  --json             Also write results to sigilant_results.json
+
+sigilant-sweep setup    Check credentials for all backends (interactive)
+sigilant-sweep info     Show detected hardware and installed engines
+sigilant-sweep --version
 ```
 
-Modal:
+---
+
+## Cloud backend setup
+
+### Modal
 
 ```bash
-cd sigilant-sweep
-source .venv/bin/activate
-sigilant-runner run --model Qwen/Qwen2.5-1.5B-Instruct-GGUF --backend modal --engine llama.cpp --hardware l4 --configs 16 --trials 3 --score-profile balanced
+pip install 'sigilant-sweep[modal]'
+modal token new          # saves credentials to ~/.modal.toml
+sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend modal --hardware a10g
 ```
 
-## Depth Profile
-
-Runs three prompt-depth passes and reports bucket winners.
+### RunPod
 
 ```bash
-sigilant-runner run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
-  --engine llama.cpp \
-  --hardware l4 \
-  --configs 16 \
-  --trials 10 \
-  --score-profile balanced \
-  --benchmark-mode depth_profile \
-  --depth-prompt-8k prompts/hard_quality_8k_prompt.txt \
-  --depth-prompt-14k prompts/hard_quality_14k_prompt.txt \
-  --depth-prompt-28k prompts/hard_quality_28k_prompt.txt
+pip install 'sigilant-sweep[runpod]'
+export RUNPOD_API_KEY=<your-key>
+sigilant-sweep deploy --backend runpod     # builds + deploys worker image (one-time)
+export SIGILANT_RUNPOD_ENDPOINT_ID=<printed-endpoint-id>
+sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod --engine llama.cpp --hardware rtx4090
 ```
 
-Output includes:
-- `best_at_8k`
-- `best_at_14k`
-- `best_at_28k`
-- per-bucket result tables
+---
 
-## Agent Smoke (5-check quick gate)
+## What this measures
 
-Enable with:
+| Metric | Description |
+|--------|-------------|
+| **TPS** | Output tokens per second |
+| **TTFT** | Time to first token (ms) |
+| **ITL** | Inter-token latency (ms) |
+| **PPL** | Perplexity on a fixed corpus — lightweight quality proxy |
+| **Score** | Sigilant composite (preset-based): balanced/latency/quality profiles |
 
-```bash
---agent-smoke
-```
+## What this does NOT measure
 
-Checks:
-- structural JSON
-- single-tool JSON
-- multi-tool JSON
-- basic refusal behavior
-- tool-arg JSON shape
+- Tool calling correctness
+- Structured JSON / schema output validity
+- Hallucination resistance
+- Prompt injection resistance
+- Long-context retrieval (NIAH)
 
-## Scoring and Trial Semantics
+PPL catches gross quantization degradation. It does not validate production agent safety.
 
-- Default profile: `balanced`
-- Balanced weights: `35% TPS + 25% TTFT + 40% PPL`
-- TPS/TTFT normalization uses `p95` (fallback to p50 if needed)
-- PPL is aggregated as mean across successful trials
+## vLLM status
 
-Trials are **trial-first with rotated starts**:
-- each trial runs all configs once
-- start offset rotates per trial
-- final metrics aggregate per config across trials
+- Implemented:
+  - local vLLM sweep
+  - Modal vLLM sweep (HF model localized at run start and reused through the sweep)
+- Not implemented yet:
+  - RunPod vLLM backend
+  - vLLM agent smoke
 
-## Model Input
+PPL corpus quality note:
+- Current PPL corpus is intentionally lightweight and should be treated as a coarse proxy.
+- For close winners, a small/synthetic corpus can under-separate configs.
+- Use higher trials for stability, and treat PPL as directional unless you swap in a larger, domain-representative corpus.
 
-`--model` expects a Hugging Face GGUF repo.
+Boundary:
+- OSS `sigilant-sweep`: fast config recommendation and lightweight smoke triage.
+- Paid [Sigilant Optimizer](https://sigilantlabs.com/optimize): full safety/quality gates, long-context reliability, and deployment-grade certification.
 
-Examples:
-- `Qwen/Qwen2.5-1.5B-Instruct-GGUF`
-- `Qwen/Qwen2.5-7B-Instruct-GGUF`
-- `bartowski/Phi-3.5-mini-instruct-GGUF`
+### Score profiles
 
-Split GGUF repos are supported (runner fetches sibling shards).
+- `balanced`: `40% TPS + 20% TTFT + 40% PPL`
+- `latency`: `50% TPS + 30% TTFT + 20% PPL`
+- `quality`: `30% TPS + 20% TTFT + 50% PPL`
 
-## Artifacts
+If PPL is unavailable, TPS/TTFT weights are renormalized automatically.
 
-Each run writes to:
+---
 
-`artifacts/runs/<run_id>/`
+## License
 
-Files:
-- `sigilant_results.json`
-- `sigilant_summary.md`
-- `sigilant_frontier.svg`
-- `sigilant_terminal.txt`
-
-Sweep optimizes for speed and quality proxy. For capability validation (tool calling, SQL, structured output, agent safety) across your actual workload, see [Sigilant Optimizer](https://sigilantlabs.com/app/new).
-
-## Troubleshooting
-
-### 1) `modal is not installed`
-
-You’re running `--backend modal` without modal package in this venv.
-
-```bash
-pip install -U modal
-```
-
-### 2) `huggingface-hub is required to list models`
-
-```bash
-pip install -U huggingface_hub
-```
-
-### 3) Modal install fails with `cbor2` / `can't find Rust compiler`
-
-Typical error:
-- `error: can't find Rust compiler`
-
-Preferred fix order:
-1) use Python `>= 3.11` venv
-2) retry install
-3) if still failing on Intel Mac, use pinned no-Rust fallback
-4) if you prefer latest Modal, install Rust toolchain and retry
-
-```bash
-deactivate 2>/dev/null || true
-rm -rf .venv
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip setuptools wheel
-pip install -e .
-pip install -U modal huggingface_hub
-```
-
-Pinned no-Rust fallback (Intel Mac):
-```bash
-pip install -U "cbor2==5.7.1" "modal==1.3.1" huggingface_hub
-modal setup
-```
-
-If you want latest Modal and install still fails on `cbor2`, install Rust:
-
-macOS (Homebrew):
-```bash
-brew install rust
-```
-
-Then retry:
-```bash
-pip install -U modal huggingface_hub
-```
-
-Verify:
-```bash
-python -m pip show modal cbor2 huggingface_hub
-```
-
-Fast check:
-```bash
-python3 -c "import sys; print(sys.version)"
-```
-
-### 4) All rows `FAILED`
-
-Check:
-- model repo is valid GGUF repo
-- HF token available if rate-limited
-- backend/hardware pairing is valid
-- local path has working `llama-cli`
-
-### 5) PPL is blank (`—`)
-
-Most common causes:
-- invalid `SIGILANT_PPL_CORPUS` path
-- corpus too short for configured eval context
-
-Try:
-
-```bash
-export SIGILANT_PPL_CORPUS=prompts/ppl_corpus_hard_mixed_6k.txt
-export SIGILANT_PPL_EVAL_CTX=1536
-```
-
-### 6) Winner confidence is low
-
-Increase trials:
-
-```bash
---trials 15
-```
-or
-```bash
---trials 20
-```
-
-### 7) Clean local reset
-
-```bash
-deactivate 2>/dev/null || true
-rm -rf .venv
-```
-
-Then reinstall:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip setuptools wheel
-pip install -e .
-pip install -U huggingface_hub
-```
-
-Deleting this repo folder deletes only this repo’s `.venv`. Other virtual environments are unaffected.
-
-## Additional Docs
-
-- Command recipes: [COMMANDS_LLAMA_CPP.md](./COMMANDS_LLAMA_CPP.md)
-- Internal execution flow: [LLAMACPP_INTERNAL_FLOW.md](./LLAMACPP_INTERNAL_FLOW.md)
-
-## Appendix A: Install llama.cpp / llama-cli
-
-You need `llama-cli` for local backend runs.
-
-### Option 1: Build from source
-
-```bash
-git clone https://github.com/ggerganov/llama.cpp.git
-cd llama.cpp
-cmake -B build
-cmake --build build -j
-./build/bin/llama-cli --version
-```
-
-Then either:
-- add `build/bin` to `PATH`, or
-- set:
-
-```bash
-export SIGILANT_LLAMA_CLI=/absolute/path/to/llama.cpp/build/bin/llama-cli
-```
-
-### Option 2: Existing binary
-
-If this works, no additional install is required:
-
-```bash
-llama-cli --version
-```
+Apache 2.0 — see [LICENSE](LICENSE).

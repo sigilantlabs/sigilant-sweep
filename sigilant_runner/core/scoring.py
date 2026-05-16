@@ -11,13 +11,13 @@ def resolve_weight_profile(profile: str) -> Tuple[float, float, float]:
         return 0.50, 0.30, 0.20
     if p == "quality":
         return 0.30, 0.20, 0.50
-    return 0.35, 0.25, 0.40
+    return 0.40, 0.20, 0.40
 
 
 def compute_scores(results: List[RunResult], profile: str = "balanced") -> List[RunResult]:
     """Normalise and compute Sigilant Score for each succeeded result.
 
-    Weights: 35% TPS, 25% TTFT (lower is better), 40% PPL quality (lower PPL is better).
+    Weights: 40% TPS, 20% TTFT (lower is better), 40% PPL quality (lower PPL is better).
     When PPL is unavailable (vLLM), the weight shifts: 60% TPS, 40% TTFT.
     Score is expressed as 0–100.
     """
@@ -44,17 +44,20 @@ def compute_scores(results: List[RunResult], profile: str = "balanced") -> List[
         if not r.succeeded:
             continue
 
-        # Use p95 metrics directly when available; fallback to p50 if p95 is unavailable.
         tps_p50_score  = r.tps / max_tps if max_tps > 0 else 0.0
-        tps_score = (
-            (r.tps_p95 / max_tps_p95) if (has_tail_tps and r.tps_p95 and r.tps_p95 > 0 and max_tps_p95 > 0)
-            else tps_p50_score
-        )
+        if has_tail_tps and r.tps_p95 and r.tps_p95 > 0:
+            tps_p95_score = r.tps_p95 / max_tps_p95 if max_tps_p95 > 0 else 0.0
+            # Symmetric tail-aware blend with TTFT.
+            tps_score = 0.5 * tps_p50_score + 0.5 * tps_p95_score
+        else:
+            tps_score = tps_p50_score
         ttft_p50_score = min_ttft / r.ttft_ms if r.ttft_ms > 0 else 0.0
-        ttft_score = (
-            (min_ttft_p95 / r.ttft_p95_ms) if (has_tail_ttft and r.ttft_p95_ms and r.ttft_p95_ms > 0)
-            else ttft_p50_score
-        )
+        if has_tail_ttft and r.ttft_p95_ms and r.ttft_p95_ms > 0:
+            ttft_p95_score = min_ttft_p95 / r.ttft_p95_ms
+            # Tail-aware blend when high-trial stats are available.
+            ttft_score = 0.5 * ttft_p50_score + 0.5 * ttft_p95_score
+        else:
+            ttft_score = ttft_p50_score
         r.tps_norm = round(tps_score * 100, 1)
         r.ttft_norm = round(ttft_score * 100, 1)
 
