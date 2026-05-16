@@ -21,8 +21,18 @@ def resolve(model: str, engine: str, backend: str = "local") -> Tuple[List[Tuple
         label     — display name for the header
         repo_id   — HF repo ID if remote, "" if local
     """
-    if engine != "llama.cpp":
-        raise RuntimeError("This launch bundle supports only --engine llama.cpp")
+    if engine == "vllm":
+        label = model.split("/")[-1] if "/" in model else Path(model).stem
+        # Dedicated vLLM families (separate from llama.cpp GGUF quants):
+        # 4 families × 4 ctx/kv combos = 16 configs.
+        families = ["FP16_BASELINE", "INT8_W8A8", "AWQ4_MARLIN", "GPTQ4_MARLIN"]
+        raw = os.environ.get("SIGILANT_VLLM_FAMILIES", "").strip()
+        if raw:
+            wanted = {x.strip().upper() for x in raw.split(",") if x.strip()}
+            filtered = [f for f in families if f in wanted]
+            if filtered:
+                families = filtered
+        return [(fam, model) for fam in families], label, model if "/" in model else ""
 
     p = Path(model)
     if p.exists() and p.suffix.lower() == ".gguf":
@@ -30,7 +40,7 @@ def resolve(model: str, engine: str, backend: str = "local") -> Tuple[List[Tuple
         return [(quant, str(p))], p.stem, ""
 
     # HuggingFace repo ID
-    if backend in ("modal",):
+    if backend in ("modal", "runpod"):
         # Remote backends: list files only — download happens inside the container
         return _list_from_hub(model)
     return _fetch_from_hub(model)

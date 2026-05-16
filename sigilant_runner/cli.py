@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import hashlib
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple, List
@@ -25,6 +26,18 @@ app = typer.Typer(
 console = Console()
 
 
+def _is_infra_error(exc: Exception) -> bool:
+    msg = f"{type(exc).__name__}: {exc}".lower()
+    needles = (
+        "connectionerror",
+        "deadline exceeded",
+        "heartbeat",
+        "nodename nor servname provided",
+        "temporary failure in name resolution",
+    )
+    return any(n in msg for n in needles)
+
+
 @app.command()
 def run(
     model: str = typer.Option(
@@ -33,11 +46,11 @@ def run(
     ),
     backend: str = typer.Option(
         "local", "--backend", "-b",
-        help="Where to run: local | modal",
+        help="Where to run: local | modal | runpod",
     ),
     engine: str = typer.Option(
         "llama.cpp", "--engine", "-e",
-        help="Inference engine: llama.cpp",
+        help="Inference engine: llama.cpp | vllm",
     ),
     hardware: str = typer.Option(
         "auto", "--hardware",
@@ -86,6 +99,10 @@ def run(
         None, "--baseline-config",
         help="Compare recommended winner vs current config. Format: QUANT,CTX,KV,REGIME (e.g. Q4_K_M,8192,k16v16,default)",
     ),
+    only_config: Optional[str] = typer.Option(
+        None, "--only-config",
+        help="Run exactly one config. Format: QUANT,CTX,KV,REGIME (e.g. INT8_W8A8,32768,k8v8,long).",
+    ),
     check: bool = typer.Option(
         False, "--check",
         help="CI mode: fail non-zero if winner drifts from baseline file.",
@@ -129,7 +146,7 @@ def run(
     if backend == "local" and vram_gb == 0:
         console.print(
             "[yellow]No GPU detected — running on CPU. "
-            "Inference will be slow. Consider --backend modal.[/yellow]\n"
+            "Inference will be slow. Consider --backend modal or --backend runpod.[/yellow]\n"
         )
         vram_gb = 64.0  # Allow large context on CPU (RAM-backed)
 
@@ -144,14 +161,12 @@ def run(
         raise typer.Exit(1)
 
     # ── Grid ──────────────────────────────────────────────────────────────────
-    # Local backend needs concrete local file paths; modal backend needs repo+filename.
-    effective_model_repo = repo_id if backend == "modal" else ""
     grid = generate_grid(
         models=models,
         vram_gb=vram_gb,
         model_params_b=effective_params_b,
         max_configs=max_configs,
-        model_repo=effective_model_repo,
+        model_repo=repo_id,
         engine=engine,
     )
 
@@ -161,6 +176,24 @@ def run(
             "Try a smaller model, a higher-VRAM GPU, or --params-b with the correct size."
         )
         raise typer.Exit(1)
+
+    if only_config:
+        parsed = _parse_config_selector(only_config)
+        if not parsed:
+            console.print("[red]Invalid --only-config.[/red] Use QUANT,CTX,KV,REGIME")
+            raise typer.Exit(1)
+        q, ctx, kv, regime = parsed
+        filtered = [
+            c for c in grid
+            if c.quant_label.lower() == q.lower()
+            and int(c.context) == int(ctx)
+            and c.kv_type.lower() == kv.lower()
+            and c.regime.lower() == regime.lower()
+        ]
+        if not filtered:
+            console.print(f"[red]--only-config not found in generated grid:[/red] {only_config}")
+            raise typer.Exit(1)
+        grid = filtered
 
     print_header(model_label, hw_label, engine, len(grid))
 
@@ -175,24 +208,46 @@ def run(
     if mode not in {"ranking", "depth_profile"}:
         console.print("[red]Invalid --benchmark-mode.[/red] Use: ranking | depth_profile")
         raise typer.Exit(1)
-    if engine != "llama.cpp":
-        console.print("[red]Invalid --engine for this build.[/red] Use: llama.cpp")
-        raise typer.Exit(1)
-    if backend not in {"local", "modal"}:
-        console.print("[red]Invalid --backend for this build.[/red] Use: local | modal")
-        raise typer.Exit(1)
 
     # Ranking pass (single fixed workload)
     # In depth_profile mode, force ranking pass to 8k prompt and treat it as the
     # 8k bucket winner; cross-depth global winner is intentionally avoided.
+    depth_retry_attempts = max(1, int(os.environ.get("SIGILANT_DEPTH_PASS_RETRIES", "2")))
+    depth_retry_backoff_s = max(0.0, float(os.environ.get("SIGILANT_DEPTH_PASS_RETRY_BACKOFF_S", "3")))
+
+    def _dispatch_with_infra_retry(*, prompt_label: str, trials_local: int):
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, depth_retry_attempts + 1):
+            try:
+                return _dispatch(backend, engine, grid, trials=trials_local)
+            except Exception as exc:
+                last_exc = exc
+                if not _is_infra_error(exc) or attempt >= depth_retry_attempts:
+                    raise
+                console.print(
+                    f"[yellow]Infra retry:[/yellow] {prompt_label} attempt {attempt}/{depth_retry_attempts} failed "
+                    f"with {type(exc).__name__}; retrying..."
+                )
+                if depth_retry_backoff_s > 0:
+                    time.sleep(depth_retry_backoff_s)
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("dispatch_failed_without_exception")
+
     prev_prompt_env = os.environ.get("SIGILANT_BENCH_PROMPT_FILE")
     try:
         if mode == "depth_profile":
             p8 = Path(depth_prompt_8k)
             if p8.exists():
                 os.environ["SIGILANT_BENCH_PROMPT_FILE"] = str(p8.resolve())
-        results = _dispatch(backend, engine, grid, trials=resolved_trials)
+        results = _dispatch_with_infra_retry(prompt_label="ranking/8k", trials_local=resolved_trials)
     except RuntimeError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(1)
+    except Exception as exc:
+        if _is_infra_error(exc):
+            console.print(f"[red]Infra failure (ranking pass):[/red] {type(exc).__name__}: {exc}")
+            raise typer.Exit(2)
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
     finally:
@@ -248,7 +303,7 @@ def run(
                     continue
                 os.environ["SIGILANT_BENCH_PROMPT_FILE"] = str(p.resolve())
                 try:
-                    dresults = _dispatch(backend, engine, grid, trials=resolved_trials)
+                    dresults = _dispatch_with_infra_retry(prompt_label=f"depth/{dlabel}", trials_local=resolved_trials)
                     dresults = compute_scores(dresults, profile=profile)
                     dw = _best_result(dresults)
                     depth_runs.append({
@@ -268,14 +323,19 @@ def run(
                             }
                             for r in dresults
                         ],
+                        "infra_failed": False,
+                        "excluded_from_ranking": True,
                     })
                 except Exception as exc:
+                    is_infra = _is_infra_error(exc)
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": str(p.resolve()),
-                        "error": f"{type(exc).__name__}: {exc}",
+                        "error": f"{'infra_failed' if is_infra else type(exc).__name__}: {exc}",
                         "winner": None,
                         "results": [],
+                        "infra_failed": bool(is_infra),
+                        "excluded_from_ranking": True,
                     })
         finally:
             if prev_prompt_env is None:
@@ -389,6 +449,24 @@ def run(
             prompt_tokens_est = max(1, int(round(len(txt) / 4.0)))
         except Exception:
             prompt_source = f"{prompt_path} (unreadable)"
+    # Prefer actual runtime prompt token estimate reported by backend trial logs.
+    runtime_prompt_token_ests: List[int] = []
+    for r in results:
+        pre = getattr(r, "preflight", None) or {}
+        logs = pre.get("trial_logs") if isinstance(pre, dict) else None
+        if not isinstance(logs, list):
+            continue
+        for t in logs:
+            if not isinstance(t, dict):
+                continue
+            v = t.get("prompt_tokens_est")
+            if isinstance(v, int) and v > 0:
+                runtime_prompt_token_ests.append(v)
+    if runtime_prompt_token_ests:
+        prompt_tokens_est = int(round(sum(runtime_prompt_token_ests) / len(runtime_prompt_token_ests)))
+        if prompt_source == "default":
+            prompt_source = "runtime:trial_logs"
+
     if prompt_tokens_est is not None:
         max_ctx = max((r.config.context for r in results), default=None)
         if max_ctx and prompt_tokens_est < int(0.5 * max_ctx):
@@ -477,6 +555,13 @@ def run(
 
 
 @app.command()
+def setup() -> None:
+    """Check credentials and hardware for all backends (interactive walkthrough)."""
+    from .setup_wizard import run_setup
+    run_setup()
+
+
+@app.command()
 def info() -> None:
     """Show detected local hardware and installed engines."""
     from .core.hardware import detect_hardware
@@ -498,9 +583,11 @@ def info() -> None:
         console.print(f"  [dim]–  llama-cli binary not found[/dim]")
         console.print(f"     [dim]Set SIGILANT_LLAMA_CLI=/path/to/llama-cli  or build llama.cpp[/dim]")
     _print_engine_status("llama_cpp", "llama-cpp-python", "pip install 'sigilant-runner[llama]'")
+    _print_engine_status("vllm",      "vLLM",             "pip install 'sigilant-runner[vllm]'  (Linux + CUDA)")
     console.print()
-    console.print("[bold]Cloud backend:[/bold]")
+    console.print("[bold]Cloud backends:[/bold]")
     _print_engine_status("modal",  "Modal",  "pip install 'sigilant-runner[modal]'")
+    _print_engine_status("runpod", "RunPod", "pip install 'sigilant-runner[runpod]'")
     console.print()
 
 
@@ -525,8 +612,11 @@ def _dispatch(backend: str, engine: str, grid, trials: int = 1) -> list:
     elif backend == "modal":
         from .backends.modal_backend import ModalBackend
         return ModalBackend(engine=engine, trials=trials).run(grid)
+    elif backend == "runpod":
+        from .backends.runpod_backend import RunPodBackend
+        return RunPodBackend(engine=engine, trials=trials).run(grid)
     else:
-        raise RuntimeError(f"Unknown backend: {backend!r}. Choose local | modal")
+        raise RuntimeError(f"Unknown backend: {backend!r}. Choose local | modal | runpod")
 
 
 def _print_engine_status(import_name: str, label: str, install: str) -> None:
@@ -637,6 +727,20 @@ def _baseline_compare(results, baseline_config: str):
         ),
         "delta_ppl": _r((winner.ppl or 0) - (base.ppl or 0), 2) if (winner.ppl is not None and base.ppl is not None) else 0.0,
     }
+
+
+def _parse_config_selector(raw: str):
+    bits = [x.strip() for x in (raw or "").split(",")]
+    if len(bits) != 4:
+        return None
+    q, ctx_s, kv, regime = bits
+    try:
+        ctx = int(ctx_s)
+    except Exception:
+        return None
+    if not q or not kv or not regime:
+        return None
+    return q, ctx, kv, regime
 
 
 def _quant_bits(label: str) -> int:

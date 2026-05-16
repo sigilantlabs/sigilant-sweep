@@ -92,15 +92,15 @@ def print_results_table(results: List[RunResult], *, profile: str = "balanced", 
         console.print(f"[bold]Best config:[/bold]  {best.config.label()}")
     if has_ttft_p95 and has_tps_p95:
         console.print(
-            "[dim]Score formula: TPS_norm = TPS p95 / max TPS p95; "
-            "TTFT_norm = min TTFT p95 / TTFT p95; "
+            "[dim]Score formula: TPS_norm = 0.5×(TPS p50 / max TPS p50) + 0.5×(TPS p95 / max TPS p95); "
+            "TTFT_norm = 0.5×(min TTFT p50 / TTFT p50) + 0.5×(min TTFT p95 / TTFT p95); "
             f"final score ({profile}) = {int(w_tps*100)}% TPS_norm + {int(w_ttft*100)}% TTFT_norm + {int(w_ppl*100)}% PPL_norm "
             "(PPL unavailable -> TPS/TTFT renormalized).[/dim]"
         )
     elif has_ttft_p95:
         console.print(
             "[dim]Score formula: TPS_norm = TPS p50 / max TPS p50; "
-            "TTFT_norm = min TTFT p95 / TTFT p95; "
+            "TTFT_norm = 0.5×(min TTFT p50 / TTFT p50) + 0.5×(min TTFT p95 / TTFT p95); "
             f"final score ({profile}) = {int(w_tps*100)}% TPS_norm + {int(w_ttft*100)}% TTFT_norm + {int(w_ppl*100)}% PPL_norm "
             "(PPL unavailable -> TPS/TTFT renormalized).[/dim]"
         )

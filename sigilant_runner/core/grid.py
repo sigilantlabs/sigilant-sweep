@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import List, Tuple
 
 from .metrics import RunConfig
@@ -68,11 +69,25 @@ def generate_grid(
     """Return up to max_configs RunConfig objects that fit within vram_gb."""
     configs: List[RunConfig] = []
     seen: set = set()
+    allowed_kv = None
+    if engine == "vllm":
+        raw_kv = os.environ.get("SIGILANT_VLLM_KV_TYPES", "").strip()
+        if raw_kv:
+            vals = {x.strip().lower() for x in raw_kv.split(",") if x.strip()}
+            if vals:
+                allowed_kv = vals
+
     for quant_label, model_path in models:
         for ctx, kv_type, regime in _COMBOS:
-            est = _vram_estimate_gb(quant_label, ctx, kv_type, model_params_b)
-            if est > vram_gb * 0.90:
+            if allowed_kv is not None and kv_type.lower() not in allowed_kv:
                 continue
+            # vLLM families are logical profile labels, not GGUF quant weights.
+            # Keep a full 16-config sweep (4 families × 4 combos) and let runtime
+            # decide feasibility on target GPU.
+            if engine != "vllm":
+                est = _vram_estimate_gb(quant_label, ctx, kv_type, model_params_b)
+                if est > vram_gb * 0.90:
+                    continue
             sig = (quant_label.upper(), ctx, kv_type)
             if sig in seen:
                 continue

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import statistics
 from typing import Callable, List, Optional
 
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
@@ -93,11 +92,7 @@ class LocalBackend:
                         tps=round(_median(tps_vals), 1),
                         ttft_ms=round(_median(ttft_vals), 1),
                         itl_ms=round(_median(itl_vals), 2),
-                        ppl=(
-                            round(statistics.mean([r.ppl for r in trial_rows if r.ppl is not None]), 2)
-                            if any(r.ppl is not None for r in trial_rows)
-                            else None
-                        ),
+                        ppl=trial_rows[0].ppl,
                         tps_p95=round(_percentile(tps_vals, 0.95), 1) if len(tps_vals) >= 4 else None,
                         ttft_p95_ms=round(_percentile(ttft_vals, 0.95), 1) if len(ttft_vals) >= 4 else None,
                     )
@@ -108,10 +103,14 @@ class LocalBackend:
         return results
 
     def _make_engine(self, configs: List[RunConfig]):
+        if self.engine_name == "vllm":
+            from ..engines.vllm_engine import VLLMEngine
+            return _MultiFileEngine(VLLMEngine, configs)
+
         if self.engine_name == "llama.cpp":
             return self._make_llama_engine(configs)
 
-        raise ValueError(f"Unknown engine: {self.engine_name!r} (supported: llama.cpp)")
+        raise ValueError(f"Unknown engine: {self.engine_name!r}")
 
     @staticmethod
     def _make_llama_engine(configs: List[RunConfig]):
