@@ -34,6 +34,9 @@ It is not a new inference runtime.
 ## Install
 
 ```bash
+# Refresh installer tooling first (recommended)
+python3 -m pip install -U pip
+
 # Base (lightweight CLI + reporting)
 pip install sigilant-sweep
 
@@ -57,6 +60,12 @@ pip install 'sigilant-sweep[runpod]'
 
 # Everything
 pip install 'sigilant-sweep[all]'
+```
+
+If your environment uses a custom package index or stale mirror, force PyPI:
+
+```bash
+pip install --index-url https://pypi.org/simple sigilant-sweep
 ```
 
 ---
