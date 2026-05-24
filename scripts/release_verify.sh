@@ -33,8 +33,22 @@ ls -la dist
 echo "==> Twine check"
 python3 -m twine check "${WHEEL}" "${SDIST}"
 
-echo "==> Upload"
-python3 -m twine upload "dist/sigilant_sweep-${TARGET_VERSION}"*
+echo "==> Upload (or skip if version already present on PyPI)"
+if python3 - "${TARGET_VERSION}" <<'PY'
+import sys
+import urllib.request
+
+target = sys.argv[1]
+url = "https://pypi.org/simple/sigilant-sweep/"
+data = urllib.request.urlopen(url, timeout=20).read().decode("utf-8", "ignore")
+needle = f"sigilant_sweep-{target}-py3-none-any.whl"
+sys.exit(0 if needle in data else 1)
+PY
+then
+  echo "Version ${TARGET_VERSION} already present on PyPI, skipping upload."
+else
+  python3 -m twine upload --skip-existing "dist/sigilant_sweep-${TARGET_VERSION}"*
+fi
 
 echo "==> Wait until simple index sees target version"
 for i in {1..20}; do
