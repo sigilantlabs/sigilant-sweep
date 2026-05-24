@@ -65,7 +65,26 @@ rm -rf "${VERIFY_VENV}"
 python3 -m venv "${VERIFY_VENV}"
 source "${VERIFY_VENV}/bin/activate"
 python3 -m pip install -U pip setuptools wheel
-python3 -m pip install --no-cache-dir --index-url https://pypi.org/simple "sigilant-sweep==${TARGET_VERSION}"
+
+echo "==> Fresh venv install (retry until index fully propagates)"
+for i in {1..20}; do
+  if python3 -m pip install --no-cache-dir --index-url https://pypi.org/simple "sigilant-sweep==${TARGET_VERSION}"; then
+    break
+  fi
+  if [[ $i -eq 20 ]]; then
+    echo "ERROR: fresh-venv pip install failed after propagation retries."
+    python3 -m pip index versions sigilant-sweep --index-url https://pypi.org/simple || true
+    python3 - <<'PY'
+import urllib.request
+u = "https://pypi.org/simple/sigilant-sweep/"
+print(urllib.request.urlopen(u, timeout=20).read().decode("utf-8", "ignore"))
+PY
+    exit 1
+  fi
+  echo "Retrying fresh install in 15s (${i}/20)..."
+  sleep 15
+done
+
 python3 -m pip show sigilant-sweep | grep '^Version:'
 sigilant-sweep --version
 
