@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "sigilant-sweep"
 version = "0.1.1"
-description = "Open-source LLM inference sweep — TPS, TTFT, ITL, PPL across 16 configs on your hardware."
+description = "Open-source inference sweep for llama.cpp and vLLM: TPS, TTFT, ITL, and PPL across 16 configs."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"

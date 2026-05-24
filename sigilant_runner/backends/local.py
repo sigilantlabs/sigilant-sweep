@@ -128,8 +128,8 @@ class LocalBackend:
         except ImportError:
             raise RuntimeError(
                 "No llama.cpp engine available.\n"
-                "  Option A — set SIGILANT_LLAMA_CLI=/path/to/llama-cli\n"
-                "  Option B — pip install 'sigilant-runner[llama]'"
+                "  Option A: set SIGILANT_LLAMA_CLI=/path/to/llama-cli\n"
+                "  Option B: pip install 'sigilant-sweep[llama]'"
             )
 
 

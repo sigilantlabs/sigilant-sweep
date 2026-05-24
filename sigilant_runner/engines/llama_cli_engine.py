@@ -67,7 +67,7 @@ class LlamaCLIEngine:
             raise RuntimeError(
                 "llama-cli binary not found.\n"
                 "Set SIGILANT_LLAMA_CLI=/path/to/llama-cli  or install llama-cpp-python:\n"
-                "  pip install 'sigilant-runner[llama]'"
+                "  pip install 'sigilant-sweep[llama]'"
             )
 
     def run_config(self, config: RunConfig) -> RunResult:

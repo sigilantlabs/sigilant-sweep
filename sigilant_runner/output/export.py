@@ -643,7 +643,7 @@ def _build_frontier_svg(results: List[RunResult], context: Optional[Dict[str, An
 
 def build_repro_command(*, model: str, backend: str, engine: str, hardware: str, params_b: Optional[float], max_configs: int, trials: int, score_profile: str = "balanced") -> str:
     cmd = [
-        "sigilant-runner", "run",
+        "sigilant-sweep", "run",
         "--model", model,
         "--backend", backend,
         "--engine", engine,
@@ -676,7 +676,7 @@ def _build_terminal_like(payload: Dict[str, Any]) -> str:
     dp = payload.get("depth_profile") or {}
     lines = []
     lines.append(
-        f"sigilant-runner · {ctx.get('model_label') or ctx.get('model')} · "
+        f"sigilant-sweep · {ctx.get('model_label') or ctx.get('model')} · "
         f"{ctx.get('hardware')} · {ctx.get('engine')} · {len(ok_sorted)} configs"
     )
     lines.append("")
@@ -704,7 +704,7 @@ def _build_terminal_like(payload: Dict[str, Any]) -> str:
             )
     if isinstance(smoke, dict) and smoke:
         lines.append(
-            f"Agent smoke: {smoke.get('passed')}/{smoke.get('total')} ({_fmt_pct(smoke.get('pass_rate'))}) "
+            f"Structured-output smoke: {smoke.get('passed')}/{smoke.get('total')} ({_fmt_pct(smoke.get('pass_rate'))}) "
             f"[{smoke.get('diagnosis')}]"
         )
     if isinstance(ci, dict) and ci:

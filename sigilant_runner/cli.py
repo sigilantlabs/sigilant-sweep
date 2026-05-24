@@ -16,8 +16,8 @@ from rich import box
 from . import __version__
 
 app = typer.Typer(
-    name="sigilant-runner",
-    help="Open-source LLM inference sweep — TPS, TTFT, ITL, PPL across 16 configs.",
+    name="sigilant-sweep",
+    help="Open-source inference sweep: TPS, TTFT, ITL, PPL across 16 configs.",
     add_completion=False,
     rich_markup_mode="rich",
     no_args_is_help=True,
@@ -145,7 +145,7 @@ def run(
 
     if backend == "local" and vram_gb == 0:
         console.print(
-            "[yellow]No GPU detected — running on CPU. "
+            "[yellow]No GPU detected, running on CPU. "
             "Inference will be slow. Consider --backend modal or --backend runpod.[/yellow]\n"
         )
         vram_gb = 64.0  # Allow large context on CPU (RAM-backed)
@@ -409,7 +409,7 @@ def run(
                 f"PPL Δ={baseline_cmp['delta_ppl']:+.2f}{tail}"
             )
 
-    # Optional lightweight agent smoke checks
+    # Optional lightweight structured-output smoke checks
     smoke_payload = None
     if agent_smoke:
         smoke_payload = _maybe_run_agent_smoke(
@@ -421,15 +421,15 @@ def run(
             models=models,
         )
         if smoke_payload is None:
-            console.print("[yellow]Agent smoke skipped: currently supported for llama.cpp on local/modal paths.[/yellow]")
+            console.print("[yellow]Structured-output smoke skipped: currently supported for llama.cpp on local/modal paths.[/yellow]")
         else:
             console.print(
-                f"[dim]Agent smoke:[/dim] {smoke_payload.get('passed')}/{smoke_payload.get('total')} "
+                f"[dim]Structured-output smoke:[/dim] {smoke_payload.get('passed')}/{smoke_payload.get('total')} "
                 f"({float(smoke_payload.get('pass_rate', 0.0)) * 100:.1f}%)"
             )
             if smoke_payload.get("diagnosis") or smoke_payload.get("status"):
                 console.print(
-                    f"[dim]Agent smoke diagnosis:[/dim] {smoke_payload.get('diagnosis')}  "
+                    f"[dim]Smoke diagnosis:[/dim] {smoke_payload.get('diagnosis')}  "
                     f"[dim]status:[/dim] {smoke_payload.get('status')}"
                 )
 
@@ -582,12 +582,12 @@ def info() -> None:
     else:
         console.print(f"  [dim]–  llama-cli binary not found[/dim]")
         console.print(f"     [dim]Set SIGILANT_LLAMA_CLI=/path/to/llama-cli  or build llama.cpp[/dim]")
-    _print_engine_status("llama_cpp", "llama-cpp-python", "pip install 'sigilant-runner[llama]'")
-    _print_engine_status("vllm",      "vLLM",             "pip install 'sigilant-runner[vllm]'  (Linux + CUDA)")
+    _print_engine_status("llama_cpp", "llama-cpp-python", "pip install 'sigilant-sweep[llama]'")
+    _print_engine_status("vllm",      "vLLM",             "pip install 'sigilant-sweep[vllm]'  (Linux + CUDA)")
     console.print()
     console.print("[bold]Cloud backends:[/bold]")
-    _print_engine_status("modal",  "Modal",  "pip install 'sigilant-runner[modal]'")
-    _print_engine_status("runpod", "RunPod", "pip install 'sigilant-runner[runpod]'")
+    _print_engine_status("modal",  "Modal",  "pip install 'sigilant-sweep[modal]'")
+    _print_engine_status("runpod", "RunPod", "pip install 'sigilant-sweep[runpod]'")
     console.print()
 
 
@@ -597,7 +597,7 @@ def version_flag(
     version: bool = typer.Option(False, "--version", "-v", is_eager=True, help="Show version and exit."),
 ) -> None:
     if version:
-        console.print(f"sigilant-runner {__version__}")
+        console.print(f"sigilant-sweep {__version__}")
         raise typer.Exit()
     if ctx.invoked_subcommand is None:
         console.print(ctx.get_help())
@@ -871,7 +871,7 @@ def _print_quick_wow(*, results, baseline_cmp, smoke_payload):
     if winner is None:
         return
     console.print()
-    console.print("[bold]Quick wow[/bold]")
+    console.print("[bold]Summary[/bold]")
     console.print(f"- Recommended: {winner.config.label()}")
     console.print(
         f"- Core metrics: TPS {winner.tps:.1f}, TTFT {winner.ttft_ms:.0f}ms, "
@@ -886,7 +886,7 @@ def _print_quick_wow(*, results, baseline_cmp, smoke_payload):
         )
     if smoke_payload:
         console.print(
-            "- Agent smoke: "
+            "- Structured-output smoke: "
             f"{smoke_payload.get('passed')}/{smoke_payload.get('total')} "
             f"({float(smoke_payload.get('pass_rate', 0.0)) * 100:.1f}%) "
             f"[{smoke_payload.get('diagnosis')}]"

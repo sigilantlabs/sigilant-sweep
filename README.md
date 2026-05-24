@@ -1,13 +1,12 @@
-![Sigilant Sweep](docs/assets/hero.png)
+![Sigilant Sweep Banner](banner.png)
 
 # sigilant-sweep
 
-Benchmark orchestration for LLM inference stacks (llama.cpp, vLLM): TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
+Benchmark orchestration for inference stacks (llama.cpp, vLLM): TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
 
 [![PyPI](https://img.shields.io/pypi/v/sigilant-sweep?style=for-the-badge)](https://pypi.org/project/sigilant-sweep/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-1f6feb?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/blob/main/LICENSE)
 [![Stars](https://img.shields.io/github/stars/sigilantlabs/sigilant-sweep?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/stargazers)
-[![Sigilant Optimizer](https://img.shields.io/badge/Sigilant-Optimizer-0a7f5a?style=for-the-badge)](https://sigilantlabs.com/app/new)
 
 [Scope](#scope) • [Install](#install) • [First-time success](#first-time-success-guide) • [Metrics](#what-this-measures) • [Reproducibility](#verification-and-reproducibility)
 
@@ -143,7 +142,7 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3
 sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --json
 ```
 
-## Quick run path
+## Modal run example
 
 ```bash
 sigilant-sweep run \
@@ -166,6 +165,75 @@ Stability notes:
 - You can override `--trials` manually for faster/cheaper or deeper runs.
 - Artifacts include confidence inputs: top-2 gap and variance proxy.
 
+## Common run patterns
+
+Single config only:
+
+```bash
+sigilant-sweep run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend modal \
+  --engine llama.cpp \
+  --hardware l4 \
+  --configs 16 \
+  --trials 1 \
+  --only-config "Q4_K_M,8192,k16v16,default"
+```
+
+Depth profile:
+
+```bash
+sigilant-sweep run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend modal \
+  --engine llama.cpp \
+  --hardware l4 \
+  --configs 16 \
+  --trials 5 \
+  --benchmark-mode depth_profile \
+  --depth-prompt-8k prompts/hard_quality_8k_prompt.txt \
+  --depth-prompt-14k prompts/hard_quality_14k_prompt.txt \
+  --depth-prompt-28k prompts/hard_quality_28k_prompt.txt
+```
+
+Run with smoke check:
+
+```bash
+sigilant-sweep run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend modal \
+  --engine llama.cpp \
+  --hardware l4 \
+  --configs 16 \
+  --trials 5 \
+  --agent-smoke
+```
+
+## Execution model
+
+- CLI resolves model files, builds the config grid, dispatches to backend, and scores results.
+- llama.cpp path runs timed generation and perplexity per config/trial, then aggregates (`p50`, `p95`, `mean PPL`).
+- Multi-trial runs are rotated trial-first to avoid running all trials of one config back-to-back.
+- Artifacts are written under `artifacts/runs/<run_id>/`.
+
+## Troubleshooting
+
+- `Model resolution failed: huggingface-hub is required`
+: install `pip install "sigilant-sweep[hf]"` or `pip install "sigilant-sweep[modal]"`.
+
+- `Error: modal is not installed`
+: install `pip install "sigilant-sweep[modal]"`.
+
+- `Version ... of modal is deprecated`
+: upgrade modal in venv: `pip install -U modal`.
+
+- `Failed building wheel for cbor2` (Intel macOS path)
+: run
+`pip uninstall -y modal cbor2 && pip install --only-binary=:all: "cbor2==5.6.5" && pip install "sigilant-sweep[modal]"`.
+
+- vLLM local failures on macOS/Windows
+: expected; use Modal backend for vLLM.
+
 ---
 
 ## Hardware options
@@ -178,7 +246,7 @@ Stability notes:
 
 | `--hardware` value  | GPU              | VRAM  |
 |---------------------|------------------|-------|
-| `auto`              | auto-detect      | —     |
+| `auto`              | auto-detect      | n/a   |
 | `a10g`              | NVIDIA A10G      | 24 GB |
 | `a100`              | NVIDIA A100      | 40 GB |
 | `h100`              | NVIDIA H100      | 80 GB |
@@ -237,8 +305,7 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend modal --
 ```bash
 pip install 'sigilant-sweep[runpod]'
 export RUNPOD_API_KEY=<your-key>
-sigilant-sweep deploy --backend runpod     # builds + deploys worker image (one-time)
-export SIGILANT_RUNPOD_ENDPOINT_ID=<printed-endpoint-id>
+export SIGILANT_RUNPOD_ENDPOINT_ID=<your-predeployed-endpoint-id>
 sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod --engine llama.cpp --hardware rtx4090
 ```
 
@@ -251,7 +318,7 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod -
 | **TPS** | Output tokens per second |
 | **TTFT** | Time to first token (ms) |
 | **ITL** | Inter-token latency (ms) |
-| **PPL** | Perplexity on a fixed corpus — lightweight quality proxy |
+| **PPL** | Perplexity on a fixed corpus, used as a lightweight quality proxy |
 | **Score** | Sigilant composite (preset-based): balanced/latency/quality profiles |
 
 ## What this does NOT measure
@@ -265,7 +332,7 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod -
 PPL catches gross quantization degradation. It does not validate production agent safety.
 
 Prompt corpus note:
-- Some benchmark prompts/corpora in `prompts/` were generated or expanded with LLM assistance and then manually reviewed/edited for this harness.
+- Prompt and corpus files in `prompts/` are benchmark assets maintained for this harness.
 - They are intended for relative configuration comparison, not as a standardized external evaluation set.
 
 ## Verification and reproducibility
@@ -275,11 +342,6 @@ Prompt corpus note:
 - Separate infra/control-plane failures from model/runtime failures.
 - Treat PPL as a ranking proxy within comparable runs.
 
-See detailed docs:
-- `docs/architecture.md`
-- `docs/limitations.md`
-- `docs/reproducibility.md`
-
 ## vLLM status
 
 - Implemented:
@@ -287,7 +349,7 @@ See detailed docs:
   - Modal vLLM sweep (HF model localized at run start and reused through the sweep)
 - Not implemented yet:
   - RunPod vLLM backend
-  - vLLM agent smoke
+  - vLLM structured-output smoke
 
 PPL corpus quality note:
 - Current PPL corpus is intentionally lightweight and should be treated as a coarse proxy.
@@ -295,8 +357,8 @@ PPL corpus quality note:
 - Use higher trials for stability, and treat PPL as directional unless you swap in a larger, domain-representative corpus.
 
 Boundary:
-- OSS `sigilant-sweep`: fast config recommendation and lightweight smoke triage.
-- Paid [Sigilant Optimizer](https://sigilantlabs.com/optimize): full safety/quality gates, long-context reliability, and deployment-grade certification.
+- OSS `sigilant-sweep`: config ranking, runtime metrics, and lightweight smoke triage.
+- For broader capability/safety validation on production workloads, use [Sigilant Optimizer](https://sigilantlabs.com/optimize).
 
 ### Score profiles
 
@@ -310,4 +372,4 @@ If PPL is unavailable, TPS/TTFT weights are renormalized automatically.
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).

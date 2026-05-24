@@ -1,6 +1,6 @@
 """vLLM inference engine.
 
-Install:  pip install 'sigilant-runner[vllm]'
+Install:  pip install 'sigilant-sweep[vllm]'
 Requires: Linux + CUDA. Not supported on macOS or Windows.
 """
 from __future__ import annotations
@@ -30,7 +30,7 @@ class VLLMEngine:
         if not _HAS_VLLM:
             raise RuntimeError(
                 "vllm is not installed.\n"
-                "  pip install 'sigilant-runner[vllm]'\n"
+                "  pip install 'sigilant-sweep[vllm]'\n"
                 "  Note: requires Linux + CUDA."
             )
         self.model_path = model_path

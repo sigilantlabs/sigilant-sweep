@@ -53,7 +53,7 @@ def _list_from_hub(repo_id: str) -> Tuple[List[Tuple[str, str]], str, str]:
     except ImportError:
         raise RuntimeError(
             "huggingface-hub is required to list models.\n"
-            "  pip install 'sigilant-runner[modal]'"
+            "  pip install 'sigilant-sweep[modal]'"
         )
 
     all_files = [f for f in list_repo_files(repo_id) if f.lower().endswith(".gguf")]

@@ -17,7 +17,7 @@ console = Console()
 def print_header(model: str, hardware: str, engine: str, n_configs: int) -> None:
     console.print()
     console.print(
-        f"[bold cyan]sigilant-runner[/bold cyan]  "
+        f"[bold cyan]sigilant-sweep[/bold cyan]  "
         f"[white]{model}[/white]  ·  "
         f"[dim]{hardware}[/dim]  ·  "
         f"[dim]{engine}[/dim]  ·  "
@@ -113,8 +113,8 @@ def print_results_table(results: List[RunResult], *, profile: str = "balanced", 
     console.print()
     console.print("[dim]PPL is a quality proxy, not production validation.[/dim]")
     console.print()
-    console.print("[yellow bold]! Agent safety NOT fully evaluated.[/yellow bold]")
-    console.print("[dim]  Agent smoke helps triage model-limited vs harness-limited issues.[/dim]")
+    console.print("[yellow bold]! Safety and capability are not fully evaluated.[/yellow bold]")
+    console.print("[dim]  Structured-output smoke helps triage model-limited vs harness-limited issues.[/dim]")
     console.print("[dim]  Full production safety and long-context certification require Sigilant Optimizer.[/dim]")
     console.print()
     console.print("[dim]  → sigilantlabs.com/optimize[/dim]")

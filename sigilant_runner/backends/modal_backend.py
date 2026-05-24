@@ -1,7 +1,7 @@
 """Modal cloud backend.
 
 Runs the benchmark sweep on the user's Modal workspace.
-Install:  pip install 'sigilant-runner[modal]'
+Install:  pip install 'sigilant-sweep[modal]'
 Auth:     modal token new   (stores to ~/.modal.toml)
 """
 from __future__ import annotations
@@ -103,7 +103,7 @@ class ModalBackend:
         if not _HAS_MODAL:
             raise RuntimeError(
                 "modal is not installed.\n"
-                "  pip install 'sigilant-runner[modal]'"
+                "  pip install 'sigilant-sweep[modal]'"
             )
         self.hardware = hardware
         self.engine   = engine
@@ -113,7 +113,7 @@ class ModalBackend:
     def run(self, configs: List[RunConfig]) -> List[RunResult]:
         import os
 
-        app   = modal.App("sigilant-runner")
+        app   = modal.App("sigilant-sweep")
         image = _get_vllm_image() if self.engine == "vllm" else _get_image()
 
         secrets = []
@@ -195,9 +195,9 @@ class ModalBackend:
             configs = data["configs"]
             trials  = int(data.get("trials", 1))
             bench_prompt = str(data.get("benchmark_prompt") or _BENCH_PROMPT)
-            print(f"[sigilant-runner] {len(configs)} configs × {trials} trial(s)")
+            print(f"[sigilant-sweep] {len(configs)} configs × {trials} trial(s)")
             print(
-                f"[sigilant-runner] benchmark prompt: chars={len(bench_prompt)} "
+                f"[sigilant-sweep] benchmark prompt: chars={len(bench_prompt)} "
                 f"tokens_est~{max(1, int(round(len(bench_prompt) / 4.0)))}"
             )
 
@@ -206,12 +206,12 @@ class ModalBackend:
             for cfg in configs:
                 key = (cfg["model_repo"], cfg["model_filename"])
                 if key not in file_cache:
-                    print(f"[sigilant-runner] Downloading {cfg['model_filename']} from {cfg['model_repo']} ...")
+                    print(f"[sigilant-sweep] Downloading {cfg['model_filename']} from {cfg['model_repo']} ...")
                     file_cache[key] = hf_hub_download(
                         repo_id=cfg["model_repo"],
                         filename=cfg["model_filename"],
                     )
-                    print(f"[sigilant-runner] Download complete → {file_cache[key]}")
+                    print(f"[sigilant-sweep] Download complete -> {file_cache[key]}")
 
             def _kv_args(kv_type: str) -> list:
                 if kv_type == "k8v8":
@@ -275,12 +275,12 @@ class ModalBackend:
                         m = re.search(r"\bPPL\s*=\s*([0-9]+(?:\.[0-9]+)?)\b", blob, re.IGNORECASE)
                     if m:
                         val = round(float(m.group(1)), 2)
-                        print(f"[sigilant-runner]   PPL={val}")
+                        print(f"[sigilant-sweep]   PPL={val}")
                         return val
-                    print(f"[sigilant-runner]   PPL unavailable rc={proc.returncode} tail={blob[-300:]!r}")
+                    print(f"[sigilant-sweep]   PPL unavailable rc={proc.returncode} tail={blob[-300:]!r}")
                     return None
                 except Exception as exc:
-                    print(f"[sigilant-runner]   PPL error: {exc}")
+                    print(f"[sigilant-sweep]   PPL error: {exc}")
                     return None
                 finally:
                     try:
@@ -336,7 +336,7 @@ class ModalBackend:
                         ttft_ms = wall_ms
                 if tps == 0.0:
                     # Print stderr so the timing parse failure is visible in Modal logs
-                    print(f"[sigilant-runner]   WARNING: TPS=0, timing parse failed. stderr tail: {(proc.stderr or '')[-500:]!r}")
+                    print(f"[sigilant-sweep]   WARNING: TPS=0, timing parse failed. stderr tail: {(proc.stderr or '')[-500:]!r}")
                 return {
                     "tps":     round(tps, 1),
                     "ttft_ms": round(ttft_ms, 1),
@@ -377,9 +377,9 @@ class ModalBackend:
                 key = (cfg["model_repo"], cfg["model_filename"])
                 model_path = file_cache[key]
                 if key not in ppl_cache:
-                    print(f"[sigilant-runner] Computing PPL for {cfg['model_filename']} ...")
+                    print(f"[sigilant-sweep] Computing PPL for {cfg['model_filename']} ...")
                     ppl_cache[key] = _evaluate_ppl(model_path)
-                    print(f"[sigilant-runner]   PPL={ppl_cache[key]}")
+                    print(f"[sigilant-sweep]   PPL={ppl_cache[key]}")
                 cfg_meta.append({"cfg": cfg, "key": key, "model_path": model_path, "ppl": ppl_cache[key]})
 
             starts = _trial_starts(len(configs), trials)
@@ -397,18 +397,18 @@ class ModalBackend:
                         f"{cfg['quant_label']} ctx:{cfg['context']} "
                         f"kv:{cfg.get('kv_type','k16v16')} {cfg.get('regime','default')}"
                     )
-                    print(f"[sigilant-runner] Trial {t+1}/{trials} · Config {i+1}/{len(configs)}: {label}")
+                    print(f"[sigilant-sweep] Trial {t+1}/{trials} · Config {i+1}/{len(configs)}: {label}")
                     try:
                         tr = _bench_one(cfg, meta["model_path"])
                         buckets[i].append(tr)
                         if trials > 1:
                             print(
-                                f"[sigilant-runner]   trial {t+1}/{trials}: "
+                                f"[sigilant-sweep]   trial {t+1}/{trials}: "
                                 f"TPS={tr['tps']} TTFT={tr['ttft_ms']}ms"
                             )
                     except Exception as exc:
                         errors[i] = str(exc)
-                        print(f"[sigilant-runner]   trial {t+1}/{trials} ERROR: {exc}")
+                        print(f"[sigilant-sweep]   trial {t+1}/{trials} ERROR: {exc}")
 
             results = []
             for i, meta in enumerate(cfg_meta):
@@ -431,7 +431,7 @@ class ModalBackend:
                     }
                     cfg = meta["cfg"]
                     print(
-                        f"[sigilant-runner] Final {cfg['quant_label']} ctx:{cfg['context']} kv:{cfg.get('kv_type','k16v16')}: "
+                        f"[sigilant-sweep] Final {cfg['quant_label']} ctx:{cfg['context']} kv:{cfg.get('kv_type','k16v16')}: "
                         f"TPS={result['tps']} TTFT={result['ttft_ms']}ms "
                         f"{('TTFT_p95='+str(result['ttft_p95_ms'])+'ms ') if result.get('ttft_p95_ms') is not None else ''}"
                         f"PPL={result['ppl']}"
@@ -443,7 +443,7 @@ class ModalBackend:
                     os.unlink(path)
                 except Exception:
                     pass
-            print("[sigilant-runner] Sweep complete, returning results.")
+            print("[sigilant-sweep] Sweep complete, returning results.")
             return json.dumps(results)
 
         @app.function(
@@ -496,9 +496,9 @@ class ModalBackend:
                 if r:
                     repos_to_fetch.add(r)
             for r in sorted(repos_to_fetch):
-                print(f"[sigilant-runner] vLLM: localizing model repo {r} ...")
+                print(f"[sigilant-sweep] vLLM: localizing model repo {r} ...")
                 repo_local_cache[r] = snapshot_download(repo_id=r)
-                print(f"[sigilant-runner] vLLM: model ready at {repo_local_cache[r]}")
+                print(f"[sigilant-sweep] vLLM: model ready at {repo_local_cache[r]}")
                 cfg_path = f"{repo_local_cache[r]}/config.json"
                 qcfg = {}
                 q_method = None
@@ -627,15 +627,15 @@ class ModalBackend:
                 import torch as _tgpu
                 _gp = _tgpu.cuda.get_device_properties(0)
                 _gpu_sm = _gp.major * 10 + _gp.minor
-                print(f"[sigilant-runner] vLLM: GPU {_tgpu.cuda.get_device_name(0)} sm_{_gpu_sm}")
+                print(f"[sigilant-sweep] vLLM: GPU {_tgpu.cuda.get_device_name(0)} sm_{_gpu_sm}")
             except Exception as _ge:
-                print(f"[sigilant-runner] vLLM: GPU capability check failed ({_ge}), fp8_e5m2 disabled")
+                print(f"[sigilant-sweep] vLLM: GPU capability check failed ({_ge}), fp8_e5m2 disabled")
 
             def _teardown(proc, reason="done"):
                 if proc is None:
                     return
                 try:
-                    print(f"[sigilant-runner] vLLM: teardown reason={reason}")
+                    print(f"[sigilant-sweep] vLLM: teardown reason={reason}")
                     try:
                         os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                     except Exception:
@@ -698,7 +698,7 @@ class ModalBackend:
                 else:
                     kv_dtype_candidates = [None]
                     if want_k8 and family_upper == "FP16_BASELINE" and _gpu_sm > 0:
-                        print(f"[sigilant-runner] vLLM: skipping fp8_e5m2 (GPU sm_{_gpu_sm} < sm_89)")
+                        print(f"[sigilant-sweep] vLLM: skipping fp8_e5m2 (GPU sm_{_gpu_sm} < sm_89)")
 
                 for kv_dtype in kv_dtype_candidates:
                     oom_this_kv = False
@@ -725,14 +725,14 @@ class ModalBackend:
                             cmd += ["--kv-cache-dtype", str(kv_dtype)]
                         if max_ctx >= 24576:
                             cmd += ["--enforce-eager"]
-                            print(f"[sigilant-runner] vLLM: --enforce-eager for ctx={max_ctx} (reclaim CUDA graph VRAM)")
+                            print(f"[sigilant-sweep] vLLM: --enforce-eager for ctx={max_ctx} (reclaim CUDA graph VRAM)")
                         if want_k8 and not kv_dtype:
                             print(
-                                f"[sigilant-runner] vLLM: k8v8 with default kv-cache dtype "
+                                f"[sigilant-sweep] vLLM: k8v8 with default kv-cache dtype "
                                 f"(family={family}, repo={family_repo})"
                             )
                         print(
-                            f"[sigilant-runner] vLLM: start server family={family} kv={kv_type} "
+                            f"[sigilant-sweep] vLLM: start server family={family} kv={kv_type} "
                             f"ctx_cap={max_ctx} seqs={seqs} dtype={prof['dtype']} "
                             f"quant={qarg or 'auto/infer'} kv_dtype={kv_dtype or 'auto/default'} "
                             f"repo={family_repo}"
@@ -774,7 +774,7 @@ class ModalBackend:
                             if _is_oom and seqs <= 1:
                                 # OOM at minimum seqs: context window exceeds hardware capacity.
                                 # No smaller seq count to try — stop this kv_dtype ladder.
-                                print(f"[sigilant-runner] vLLM: OOM at seqs=1 kv_dtype={kv_dtype or 'auto'}: capacity exceeded")
+                                print(f"[sigilant-sweep] vLLM: OOM at seqs=1 kv_dtype={kv_dtype or 'auto'}: capacity exceeded")
                                 oom_this_kv = True
                                 break
                             continue
@@ -898,7 +898,7 @@ class ModalBackend:
                             post_err = exc
                             trial_log["request_readtimeout"] = str(exc)
                             if req_try == 0:
-                                print("[sigilant-runner] vLLM: request ReadTimeout; retrying once")
+                                print("[sigilant-sweep] vLLM: request ReadTimeout; retrying once")
                                 continue
                     if post_err is not None:
                         trial_log["error"] = f"ReadTimeout: {post_err}"
@@ -1078,7 +1078,7 @@ class ModalBackend:
 
             for skey, cfg_indices in config_groups.items():
                 fam, kv_type, cfg_ctx = skey
-                print(f"[sigilant-runner] vLLM: booting server family={fam} kv={kv_type} ctx={cfg_ctx}")
+                print(f"[sigilant-sweep] vLLM: booting server family={fam} kv={kv_type} ctx={cfg_ctx}")
                 srv = _start_server(fam, kv_type, cfg_ctx)
                 if "error" in srv:
                     _pf = srv.get("preflight") or _build_preflight(fam, _repo_for_family(fam), kv_type)
@@ -1103,7 +1103,7 @@ class ModalBackend:
                         trial_logs = []
                         for t in range(trials):
                             lbl = f"{fam} ctx:{cfg_ctx} kv:{kv_type} trial {t+1}/{trials}"
-                            print(f"[sigilant-runner] vLLM: measuring {lbl}")
+                            print(f"[sigilant-sweep] vLLM: measuring {lbl}")
                             try:
                                 r = None
                                 measure_err = None
@@ -1127,7 +1127,7 @@ class ModalBackend:
                                         })
                                         if "insufficient_generation_tokens" in _msg and mt_try < _MEASURE_RETRIES:
                                             print(
-                                                f"[sigilant-runner] vLLM: {lbl} attempt {mt_try}/{_MEASURE_RETRIES} "
+                                                f"[sigilant-sweep] vLLM: {lbl} attempt {mt_try}/{_MEASURE_RETRIES} "
                                                 f"insufficient generation; retrying..."
                                             )
                                             continue
@@ -1146,7 +1146,7 @@ class ModalBackend:
                                 low = err_msg.lower()
                                 if "estimated maximum model length is" in low and "kv cache" in low:
                                     err_msg = "skipped_capacity_limit: " + err_msg
-                                print(f"[sigilant-runner] vLLM: trial error {lbl}: {err_msg}")
+                                print(f"[sigilant-sweep] vLLM: trial error {lbl}: {err_msg}")
                                 trial_logs.append({"trial": t + 1, "error": err_msg})
                                 errors[_i] = {
                                     "error": err_msg,
@@ -1177,7 +1177,7 @@ class ModalBackend:
                                 "error": None,
                             }
                             print(
-                                f"[sigilant-runner] vLLM result {fam} ctx:{cfg_ctx} kv:{kv_type}: "
+                                f"[sigilant-sweep] vLLM result {fam} ctx:{cfg_ctx} kv:{kv_type}: "
                                 f"TPS={flat_results[_i]['tps']} TTFT={flat_results[_i]['ttft_ms']}ms "
                                 f"PPL={flat_results[_i]['ppl']}"
                             )
@@ -1251,7 +1251,7 @@ class ModalBackend:
                         "bucket_winners": _bucket_winners,
                     }
 
-            print("[sigilant-runner] vLLM sweep complete, returning results.")
+            print("[sigilant-sweep] vLLM sweep complete, returning results.")
             return json.dumps({"results": out_list, "depth_results": depth_results or None})
 
         # ── Submit ────────────────────────────────────────────────────────────
@@ -1264,9 +1264,9 @@ class ModalBackend:
                     txt = f.read().strip()
                 if txt:
                     benchmark_prompt = txt
-                    print(f"[sigilant-runner] using custom benchmark prompt from {prompt_path}")
+                    print(f"[sigilant-sweep] using custom benchmark prompt from {prompt_path}")
             except Exception as exc:
-                print(f"[sigilant-runner] WARN: failed to read SIGILANT_BENCH_PROMPT_FILE={prompt_path}: {exc}")
+                print(f"[sigilant-sweep] WARN: failed to read SIGILANT_BENCH_PROMPT_FILE={prompt_path}: {exc}")
         if self.engine == "vllm":
             raw_map = os.environ.get("SIGILANT_VLLM_FAMILY_REPOS", "").strip()
             if raw_map:
@@ -1294,7 +1294,7 @@ class ModalBackend:
             "benchmark_prompt": benchmark_prompt,
         })
         if self.engine == "vllm":
-            print(f"[sigilant-runner][vllm] family_repo_map={family_repo_map}")
+            print(f"[sigilant-sweep][vllm] family_repo_map={family_repo_map}")
 
         raw = None
         with modal.enable_output():
@@ -1306,7 +1306,7 @@ class ModalBackend:
 
         if raw is None:
             raise RuntimeError(
-                "Modal job returned no results — check the output above for errors."
+                "Modal job returned no results; check the output above for errors."
             )
 
         raw_parsed = json.loads(raw)
@@ -1321,7 +1321,7 @@ class ModalBackend:
     def run_agent_smoke(self, *, quant_label: str, context: int, kv_type: str, model_repo: str, model_filename: str):
         import os
 
-        app = modal.App("sigilant-runner-agent-smoke")
+        app = modal.App("sigilant-sweep-agent-smoke")
         image = _get_image()
         secrets = []
         if os.environ.get("HF_TOKEN"):

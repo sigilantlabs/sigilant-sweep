@@ -1,16 +1,12 @@
 """RunPod Serverless backend.
 
 Runs the benchmark on RunPod consumer or datacenter GPUs.
-Install:  pip install 'sigilant-runner[runpod]'
+Install:  pip install 'sigilant-sweep[runpod]'
 Auth:     export RUNPOD_API_KEY=<your-key>
 
 The RunPod backend requires a pre-deployed serverless worker endpoint.
-Deploy the worker once with:
-
-    sigilant-runner deploy --backend runpod
-
-This builds and pushes a Docker image, creates a serverless endpoint in your
-RunPod account, and stores the endpoint ID locally.
+Set endpoint ID with:
+    export SIGILANT_RUNPOD_ENDPOINT_ID=<your-endpoint-id>
 """
 from __future__ import annotations
 
@@ -46,14 +42,14 @@ class RunPodBackend:
         if not _HAS_RUNPOD:
             raise RuntimeError(
                 "runpod is not installed.\n"
-                "  pip install 'sigilant-runner[runpod]'"
+                "  pip install 'sigilant-sweep[runpod]'"
             )
         api_key = os.environ.get("RUNPOD_API_KEY")
         if not api_key:
             raise RuntimeError(
                 "RUNPOD_API_KEY is not set.\n"
                 "  export RUNPOD_API_KEY=<your-key>\n"
-                "  Run 'sigilant-runner setup' for a guided walkthrough."
+                "  Run 'sigilant-sweep setup' for a guided walkthrough."
             )
         runpod.api_key = api_key
         self.hardware  = hardware
@@ -69,8 +65,8 @@ class RunPodBackend:
         if not endpoint_id:
             raise RuntimeError(
                 f"{_ENDPOINT_ENV} is not set.\n"
-                "  Deploy the worker first:  sigilant-runner deploy --backend runpod\n"
-                "  Then set the printed endpoint ID in your environment."
+                "  Set your pre-deployed endpoint ID:\n"
+                "  export SIGILANT_RUNPOD_ENDPOINT_ID=<your-endpoint-id>"
             )
 
         endpoint = runpod.Endpoint(endpoint_id)

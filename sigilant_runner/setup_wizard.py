@@ -21,7 +21,7 @@ _WARN  = "[bold yellow]⚠[/bold yellow]"
 def run_setup() -> None:
     console.print()
     console.print(Panel.fit(
-        "[bold cyan]sigilant-runner setup[/bold cyan]\n"
+        "[bold cyan]sigilant-sweep setup[/bold cyan]\n"
         "[dim]Checks hardware and credentials for every backend.[/dim]",
         border_style="cyan",
     ))
@@ -34,9 +34,9 @@ def run_setup() -> None:
     console.print(Rule("[dim]ready[/dim]"))
     console.print()
     console.print("Start a sweep:")
-    console.print("  [bold green]sigilant-runner run --model mistralai/Mistral-7B-Instruct-v0.3[/bold green]")
-    console.print("  [dim]sigilant-runner run --model ... --backend modal --hardware a10g[/dim]")
-    console.print("  [dim]sigilant-runner run --model ... --backend runpod --hardware rtx4090[/dim]")
+    console.print("  [bold green]sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3[/bold green]")
+    console.print("  [dim]sigilant-sweep run --model ... --backend modal --hardware a10g[/dim]")
+    console.print("  [dim]sigilant-sweep run --model ... --backend runpod --hardware rtx4090[/dim]")
     console.print()
 
 
@@ -53,11 +53,11 @@ def _check_local() -> None:
     elif hw.compute_backend == "metal":
         console.print(f"  {_TICK} GPU: {hw.gpu_name}  ({hw.vram_gb} GB shared, Metal)")
     else:
-        console.print(f"  {_WARN} No GPU detected — CPU-only runs will be very slow")
+        console.print(f"  {_WARN} No GPU detected. CPU-only runs will be very slow")
 
-    _check_package("llama_cpp", "llama-cpp-python", "sigilant-runner[llama]",
-                   note="For CUDA: CMAKE_ARGS=\"-DGGML_CUDA=on\" pip install 'sigilant-runner[llama]'")
-    _check_package("vllm", "vLLM", "sigilant-runner[vllm]",
+    _check_package("llama_cpp", "llama-cpp-python", "sigilant-sweep[llama]",
+                   note="For CUDA: CMAKE_ARGS=\"-DGGML_CUDA=on\" pip install 'sigilant-sweep[llama]'")
+    _check_package("vllm", "vLLM", "sigilant-sweep[vllm]",
                    note="Linux + CUDA only", optional=True)
 
 
@@ -88,7 +88,7 @@ def _check_package(import_name: str, display: str, install: str,
 def _check_modal() -> None:
     console.print("\n[bold]Modal backend[/bold]")
 
-    if not _check_package("modal", "modal SDK", "sigilant-runner[modal]", optional=True):
+    if not _check_package("modal", "modal SDK", "sigilant-sweep[modal]", optional=True):
         return
 
     modal_toml = Path.home() / ".modal.toml"
@@ -122,7 +122,7 @@ def _verify_modal_cli() -> None:
             profile = out.stdout.strip().splitlines()[0] if out.stdout.strip() else ""
             console.print(f"  {_TICK} Modal connection verified" + (f"  [dim]({profile})[/dim]" if profile else ""))
         else:
-            console.print(f"  {_WARN} Modal CLI responded with an error — run [bold]modal token new[/bold] to refresh")
+            console.print(f"  {_WARN} Modal CLI responded with an error. Run [bold]modal token new[/bold] to refresh")
     except (FileNotFoundError, subprocess.TimeoutExpired):
         console.print(f"  {_WARN} Could not verify Modal connection (modal CLI not on PATH)")
 
@@ -132,7 +132,7 @@ def _modal_guided_setup() -> None:
     webbrowser.open("https://modal.com/settings/tokens")
     console.print()
     console.print("  After creating a token, run one of:")
-    console.print("    [bold]modal token new[/bold]                           (recommended — saves to ~/.modal.toml)")
+    console.print("    [bold]modal token new[/bold]                           (recommended, saves to ~/.modal.toml)")
     console.print("    [dim]export MODAL_TOKEN_ID=<id>[/dim]")
     console.print("    [dim]export MODAL_TOKEN_SECRET=<secret>[/dim]")
     console.print()
@@ -145,7 +145,7 @@ def _modal_guided_setup() -> None:
 def _check_runpod() -> None:
     console.print("\n[bold]RunPod backend[/bold]")
 
-    if not _check_package("runpod", "runpod SDK", "sigilant-runner[runpod]", optional=True):
+    if not _check_package("runpod", "runpod SDK", "sigilant-sweep[runpod]", optional=True):
         return
 
     api_key     = os.environ.get("RUNPOD_API_KEY")
@@ -168,10 +168,8 @@ def _check_runpod() -> None:
     if endpoint_id:
         console.print(f"  {_TICK} Worker endpoint: {endpoint_id}")
     else:
-        console.print(f"  {_WARN} SIGILANT_RUNPOD_ENDPOINT_ID not set — worker not yet deployed")
-        console.print("    Deploy the worker once with:")
-        console.print("      [bold]sigilant-runner deploy --backend runpod[/bold]")
-        console.print("    Then set the printed endpoint ID:")
+        console.print(f"  {_WARN} SIGILANT_RUNPOD_ENDPOINT_ID not set")
+        console.print("    Set your pre-deployed endpoint ID:")
         console.print("      [dim]export SIGILANT_RUNPOD_ENDPOINT_ID=<endpoint-id>[/dim]")
 
 

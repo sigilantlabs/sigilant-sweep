@@ -1,7 +1,7 @@
 """llama-cpp-python inference engine.
 
-Install:  pip install 'sigilant-runner[llama]'
-For CUDA: CMAKE_ARGS="-DGGML_CUDA=on" pip install 'sigilant-runner[llama]'
+Install:  pip install 'sigilant-sweep[llama]'
+For CUDA: CMAKE_ARGS="-DGGML_CUDA=on" pip install 'sigilant-sweep[llama]'
 """
 from __future__ import annotations
 
@@ -42,8 +42,8 @@ class LlamaEngine:
         if not _HAS_LLAMA:
             raise RuntimeError(
                 "llama-cpp-python is not installed.\n"
-                "  pip install 'sigilant-runner[llama]'\n"
-                "  For CUDA: CMAKE_ARGS=\"-DGGML_CUDA=on\" pip install 'sigilant-runner[llama]'"
+                "  pip install 'sigilant-sweep[llama]'\n"
+                "  For CUDA: CMAKE_ARGS=\"-DGGML_CUDA=on\" pip install 'sigilant-sweep[llama]'"
             )
         self.model_path = model_path
 
