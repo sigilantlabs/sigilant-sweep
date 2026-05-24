@@ -251,63 +251,37 @@ Run this sequence exactly from repo root.
 
 ```bash
 source .venv/bin/activate
-bash scripts/release_preflight.sh 0.1.4
+bash scripts/release_preflight.sh <new_version>
 ```
 
 This checks:
 - active directory is repo root
 - required files exist
-- `pyproject.toml` version equals `sigilant_runner/__init__.py` version
+- `sigilant_runner/__init__.py` derives version from package metadata
 - version equals target argument
 
 ### 2) Commit release changes
 
 ```bash
-git add README.md pyproject.toml sigilant_runner/__init__.py
-git commit -m "release: bump to 0.1.4"
+git add README.md pyproject.toml
+git commit -m "release: bump to <new_version>"
 git push origin main
 ```
 
-### 3) Build from clean workspace
+### 3) Build, upload, index-check, fresh-venv verify (single command)
 
 ```bash
-rm -rf dist build
-python3 -m pip install -U build twine
-python3 -m build
-ls -la dist
+bash scripts/release_verify.sh <new_version>
 ```
 
-Expected files:
-- `sigilant_sweep-0.1.4-py3-none-any.whl`
-- `sigilant_sweep-0.1.4.tar.gz`
+`release_verify.sh` runs:
+- preflight
+- clean build (`dist/`, `build/`)
+- twine check + upload for exact target artifacts
+- PyPI simple-index polling until target is visible
+- fresh-venv install check (`pip show`, `sigilant-sweep --version`)
 
-If these exact files are not present, stop and fix version sync before upload.
-
-### 4) Upload only target version
-
-```bash
-python3 -m twine check dist/*
-python3 -m twine upload dist/sigilant_sweep-0.1.4*
-```
-
-Never upload with broad mixed patterns after multiple releases.
-
-### 5) Fresh-venv install verification
-
-```bash
-python3 -m venv /tmp/sigilant-sweep-verify
-source /tmp/sigilant-sweep-verify/bin/activate
-python3 -m pip install -U pip setuptools wheel
-pip install --no-cache-dir --index-url https://pypi.org/simple sigilant-sweep==0.1.4
-pip show sigilant-sweep | rg '^Version:'
-sigilant-sweep --version
-```
-
-Expected:
-- package metadata version is `0.1.4`
-- CLI prints `sigilant-sweep 0.1.4`
-
-### 6) Runtime sanity
+### 4) Runtime sanity
 
 llama.cpp Modal:
 

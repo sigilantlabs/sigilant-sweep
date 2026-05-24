@@ -13,17 +13,14 @@ if [[ ! -f "pyproject.toml" || ! -f "sigilant_runner/__init__.py" ]]; then
 fi
 
 PYPROJECT_VERSION="$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' pyproject.toml | head -n 1)"
-INIT_VERSION="$(sed -nE 's/^__version__[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' sigilant_runner/__init__.py | head -n 1)"
 
-if [[ -z "${PYPROJECT_VERSION}" || -z "${INIT_VERSION}" ]]; then
-  echo "ERROR: could not parse version from pyproject.toml or sigilant_runner/__init__.py"
+if [[ -z "${PYPROJECT_VERSION}" ]]; then
+  echo "ERROR: could not parse version from pyproject.toml"
   exit 1
 fi
 
-if [[ "${PYPROJECT_VERSION}" != "${INIT_VERSION}" ]]; then
-  echo "ERROR: version mismatch:"
-  echo "  pyproject.toml: ${PYPROJECT_VERSION}"
-  echo "  __init__.py   : ${INIT_VERSION}"
+if ! grep -q 'version("sigilant-sweep")' sigilant_runner/__init__.py; then
+  echo "ERROR: sigilant_runner/__init__.py must derive __version__ from package metadata."
   exit 1
 fi
 
