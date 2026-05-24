@@ -8,5 +8,13 @@ venv/
 .env
 *.gguf
 sigilant_results.json
+sigilant_summary.md
+sigilant_terminal.txt
+sigilant_frontier.svg
 .ruff_cache/
 .DS_Store
+Logs/
+artifacts/
+functionality.md
+instructions.md
+output.md
