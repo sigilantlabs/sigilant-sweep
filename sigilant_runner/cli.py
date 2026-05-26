@@ -79,21 +79,21 @@ def run(
         "balanced", "--score-profile",
         help="Scoring preset: balanced | latency | quality.",
     ),
-    benchmark_mode: str = typer.Option(
-        "ranking", "--benchmark-mode",
-        help="Benchmark mode: ranking | depth_profile.",
+    evaluation_mode: str = typer.Option(
+        "ranking", "--evaluation-mode",
+        help="Evaluation mode: ranking | depth_profile.",
     ),
     depth_prompt_8k: str = typer.Option(
         "prompts/hard_quality_8k_prompt.txt", "--depth-prompt-8k",
-        help="Prompt file for 8k depth pass (used in --benchmark-mode depth_profile).",
+        help="Prompt file for 8k depth pass (used in --evaluation-mode depth_profile).",
     ),
     depth_prompt_14k: str = typer.Option(
         "prompts/hard_quality_14k_prompt.txt", "--depth-prompt-14k",
-        help="Prompt file for 14k depth pass (used in --benchmark-mode depth_profile).",
+        help="Prompt file for 14k depth pass (used in --evaluation-mode depth_profile).",
     ),
     depth_prompt_28k: str = typer.Option(
         "prompts/hard_quality_28k_prompt.txt", "--depth-prompt-28k",
-        help="Prompt file for 28k depth pass (used in --benchmark-mode depth_profile).",
+        help="Prompt file for 28k depth pass (used in --evaluation-mode depth_profile).",
     ),
     baseline_config: Optional[str] = typer.Option(
         None, "--baseline-config",
@@ -204,9 +204,9 @@ def run(
     if profile not in {"balanced", "latency", "quality"}:
         console.print("[red]Invalid --score-profile.[/red] Use: balanced | latency | quality")
         raise typer.Exit(1)
-    mode = (benchmark_mode or "ranking").strip().lower()
+    mode = (evaluation_mode or "ranking").strip().lower()
     if mode not in {"ranking", "depth_profile"}:
-        console.print("[red]Invalid --benchmark-mode.[/red] Use: ranking | depth_profile")
+        console.print("[red]Invalid --evaluation-mode.[/red] Use: ranking | depth_profile")
         raise typer.Exit(1)
 
     # Ranking pass (single fixed workload)
@@ -495,11 +495,11 @@ def run(
         "trials": resolved_trials,
         "confidence_target": confidence_target,
         "score_profile": profile,
-        "benchmark_mode": mode,
-        "benchmark_prompt_source": prompt_source,
-        "benchmark_prompt_chars": prompt_chars,
-        "benchmark_prompt_sha12": prompt_sha12,
-        "benchmark_prompt_tokens_est": prompt_tokens_est,
+        "evaluation_mode": mode,
+        "evaluation_prompt_source": prompt_source,
+        "evaluation_prompt_chars": prompt_chars,
+        "evaluation_prompt_sha12": prompt_sha12,
+        "evaluation_prompt_tokens_est": prompt_tokens_est,
         "repro_command": repro_cmd,
     }
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")

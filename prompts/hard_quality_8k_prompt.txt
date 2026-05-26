@@ -24,7 +24,7 @@ S-0004: Internal policy says any run with missing status fields is non-auditable
 S-0005: A model can pass speed and still fail deployment if confidence is low.
 S-0006: Inference note says TTFT variance above 15% across trials indicates unstable warm path.
 S-0007: Product note says winner must be chosen by composite score, not max TPS alone.
-S-0008: Compliance note says benchmark prompt provenance must include source path and hash.
+S-0008: Compliance note says evaluation prompt provenance must include source path and hash.
 S-0009: Team memo says context stress is weak if prompt tokens are below half of max tested ctx.
 S-0010: Model-family note says FP16 and BF16 may converge on throughput when compute-bound.
 S-0011: Requirement A: keep final output machine-readable.
@@ -43,7 +43,7 @@ S-0023: Observation: run B showed near-identical TPS across ctx and kv variants.
 S-0024: Observation: this pattern can occur when prompt depth is too shallow for tested ctx.
 S-0025: Observation: JSON status fields missing can break downstream quality dashboards.
 S-0026: Observation: summary and terminal can still show winner even when JSON status is null.
-S-0027: Observation: this mismatch is a serialization defect, not a benchmark pass/fail defect.
+S-0027: Observation: this mismatch is a serialization defect, not an evaluation pass/fail defect.
 S-0028: Observation: preflight metadata should include quant bucket, quant method, kv type, model repo.
 S-0029: Observation: compressed-tensors repos may fail if forced quantization flag conflicts.
 S-0030: Observation: when model config has quantization_config, omit quantization CLI override.
@@ -108,9 +108,9 @@ S-0088: Audit A-08 says replay reason should be explicit.
 S-0089: Audit A-09 says baseline source should be explicit.
 S-0090: Audit A-10 says product boundary note should be explicit.
 S-0091: Conflict C1: Memo M-14 claims k8v8 always faster than k16v16.
-S-0092: Conflict C2: Benchmark B-22 shows k8v8 slower in specific fp16 cases.
+S-0092: Conflict C2: Evaluation E-22 shows k8v8 slower in specific fp16 cases.
 S-0093: Conflict C3: Memo M-18 claims long ctx always better.
-S-0094: Conflict C4: Benchmark B-29 shows long ctx can increase TTFT without quality gain.
+S-0094: Conflict C4: Evaluation E-29 shows long ctx can increase TTFT without quality gain.
 S-0095: Conflict C5: Memo M-21 claims replay always improves confidence.
 S-0096: Conflict C6: Run R-31 shows replay disabled under fixed-trials mode.
 S-0097: Conflict C7: Memo M-23 claims prompt chars equal token count.

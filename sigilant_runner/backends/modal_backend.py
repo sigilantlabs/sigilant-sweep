@@ -1,6 +1,6 @@
 """Modal cloud backend.
 
-Runs the benchmark sweep on the user's Modal workspace.
+Runs the evaluation sweep on the user's Modal workspace.
 Install:  pip install 'sigilant-sweep[modal]'
 Auth:     modal token new   (stores to ~/.modal.toml)
 """
@@ -120,7 +120,7 @@ class ModalBackend:
         if os.environ.get("HF_TOKEN"):
             secrets = [modal.Secret.from_dict({"HF_TOKEN": os.environ["HF_TOKEN"]})]
 
-        # benchmark_sweep must be fully self-contained — no sigilant_runner imports.
+        # evaluation_sweep must be fully self-contained — no sigilant_runner imports.
         # Modal serializes this function (serialized=True); any reference to sigilant_runner
         # fails at container start because the package is not installed there.
         @app.function(
@@ -130,7 +130,7 @@ class ModalBackend:
             secrets=secrets,
             serialized=True,
         )
-        def benchmark_sweep(payload: str) -> str:
+        def evaluation_sweep(payload: str) -> str:
             import json, os, re, subprocess, tempfile
             from huggingface_hub import hf_hub_download
 
@@ -194,10 +194,10 @@ class ModalBackend:
             data    = json.loads(payload)
             configs = data["configs"]
             trials  = int(data.get("trials", 1))
-            bench_prompt = str(data.get("benchmark_prompt") or _BENCH_PROMPT)
+            bench_prompt = str(data.get("evaluation_prompt") or _BENCH_PROMPT)
             print(f"[sigilant-sweep] {len(configs)} configs × {trials} trial(s)")
             print(
-                f"[sigilant-sweep] benchmark prompt: chars={len(bench_prompt)} "
+                f"[sigilant-sweep] evaluation prompt: chars={len(bench_prompt)} "
                 f"tokens_est~{max(1, int(round(len(bench_prompt) / 4.0)))}"
             )
 
@@ -453,7 +453,7 @@ class ModalBackend:
             secrets=secrets,
             serialized=True,
         )
-        def benchmark_sweep_vllm(payload: str) -> str:
+        def evaluation_sweep_vllm(payload: str) -> str:
             import json, math, os, signal, socket, subprocess, time
             import requests
             from huggingface_hub import snapshot_download
@@ -480,7 +480,7 @@ class ModalBackend:
             data = json.loads(payload)
             configs = data["configs"]
             trials = max(1, int(data.get("trials", 1)))
-            bench_prompt = str(data.get("benchmark_prompt") or _BENCH_PROMPT)
+            bench_prompt = str(data.get("evaluation_prompt") or _BENCH_PROMPT)
             repo_id = str(data.get("model_repo") or "").strip()
             family_repo_map = data.get("family_repo_map") or {}
             if not isinstance(family_repo_map, dict):
@@ -1256,15 +1256,15 @@ class ModalBackend:
 
         # ── Submit ────────────────────────────────────────────────────────────
         family_repo_map = {}
-        benchmark_prompt = None
+        evaluation_prompt = None
         prompt_path = os.environ.get("SIGILANT_BENCH_PROMPT_FILE", "").strip()
         if prompt_path:
             try:
                 with open(prompt_path, "r", encoding="utf-8") as f:
                     txt = f.read().strip()
                 if txt:
-                    benchmark_prompt = txt
-                    print(f"[sigilant-sweep] using custom benchmark prompt from {prompt_path}")
+                    evaluation_prompt = txt
+                    print(f"[sigilant-sweep] using custom evaluation prompt from {prompt_path}")
             except Exception as exc:
                 print(f"[sigilant-sweep] WARN: failed to read SIGILANT_BENCH_PROMPT_FILE={prompt_path}: {exc}")
         if self.engine == "vllm":
@@ -1291,7 +1291,7 @@ class ModalBackend:
             "trials": self.trials,
             "model_repo": (configs[0].model_repo if configs else ""),
             "family_repo_map": family_repo_map,
-            "benchmark_prompt": benchmark_prompt,
+            "evaluation_prompt": evaluation_prompt,
         })
         if self.engine == "vllm":
             print(f"[sigilant-sweep][vllm] family_repo_map={family_repo_map}")
@@ -1300,9 +1300,9 @@ class ModalBackend:
         with modal.enable_output():
             with app.run():
                 if self.engine == "vllm":
-                    raw = benchmark_sweep_vllm.remote(payload)
+                    raw = evaluation_sweep_vllm.remote(payload)
                 else:
-                    raw = benchmark_sweep.remote(payload)
+                    raw = evaluation_sweep.remote(payload)
 
         if raw is None:
             raise RuntimeError(

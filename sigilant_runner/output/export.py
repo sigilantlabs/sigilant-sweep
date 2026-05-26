@@ -160,16 +160,16 @@ def _build_md(payload: Dict[str, Any]) -> str:
         f"- Hardware: `{ctx.get('hardware')}`",
         f"- Trials: `{ctx.get('trials')}`",
         f"- Score profile: `{ctx.get('score_profile', 'balanced')}`",
-        f"- Benchmark mode: `{ctx.get('benchmark_mode', 'ranking')}`",
+        f"- Evaluation mode: `{ctx.get('evaluation_mode', 'ranking')}`",
         "",
     ]
-    if ctx.get("benchmark_prompt_source"):
+    if ctx.get("evaluation_prompt_source"):
         lines += [
             "## Prompt Provenance",
-            f"- Source: `{ctx.get('benchmark_prompt_source')}`",
-            f"- Chars: `{ctx.get('benchmark_prompt_chars')}`",
-            f"- Tokens (est): `{ctx.get('benchmark_prompt_tokens_est')}`",
-            f"- SHA12: `{ctx.get('benchmark_prompt_sha12')}`",
+            f"- Source: `{ctx.get('evaluation_prompt_source')}`",
+            f"- Chars: `{ctx.get('evaluation_prompt_chars')}`",
+            f"- Tokens (est): `{ctx.get('evaluation_prompt_tokens_est')}`",
+            f"- SHA12: `{ctx.get('evaluation_prompt_sha12')}`",
             "",
         ]
     if best:

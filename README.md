@@ -2,32 +2,32 @@
 
 # sigilant-sweep
 
-Benchmark orchestration for inference stacks (llama.cpp, vLLM): TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
+Evaluation orchestration for inference stacks (llama.cpp, vLLM): TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
 
 [![PyPI](https://img.shields.io/pypi/v/sigilant-sweep?style=for-the-badge)](https://pypi.org/project/sigilant-sweep/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-1f6feb?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/blob/main/LICENSE)
 [![Stars](https://img.shields.io/github/stars/sigilantlabs/sigilant-sweep?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/stargazers)
 
-[Scope](#scope) • [Install](#install) • [First-time success](#first-time-success-guide) • [Metrics](#what-this-measures) • [Reproducibility](#verification-and-reproducibility)
+[Scope](#scope) • [Install](#install) • [Run paths](#run-paths) • [Metrics](#what-this-measures) • [Reproducibility](#verification-and-reproducibility)
 
 ---
 ## Scope
 
-`sigilant-sweep` is orchestration and reporting around existing inference engines.
+`sigilant-sweep` orchestrates config sweeps and reporting on top of existing inference engines.
 
-It handles:
+It provides:
 - config generation
-- benchmark execution via adapters (`llama.cpp`, `vllm`)
+- execution via adapters (`llama.cpp`, `vllm`)
 - metric parsing (TPS, TTFT, ITL, PPL proxy)
 - scoring and artifact export
 
 It is not a new inference runtime.
 
-## Non-goals
+## Not in scope
 
 - custom kernels or scheduler innovation
 - replacing engine internals (`llama.cpp`, `vllm`)
-- claiming production safety certification from throughput benchmarks
+- claiming production safety certification from throughput measurements
 
 ---
 
@@ -55,14 +55,11 @@ pip install 'sigilant-sweep[vllm]'
 # With Modal cloud backend
 pip install 'sigilant-sweep[modal]'
 
-# With RunPod cloud backend
-pip install 'sigilant-sweep[runpod]'
-
 # Everything
 pip install 'sigilant-sweep[all]'
 ```
 
-If your environment uses a custom package index or stale mirror, force PyPI:
+If your pip config points to a private/stale mirror, force official PyPI:
 
 ```bash
 pip install --index-url https://pypi.org/simple sigilant-sweep
@@ -70,9 +67,66 @@ pip install --index-url https://pypi.org/simple sigilant-sweep
 
 ---
 
-## First-time success guide
+## Run paths
 
-### Golden path: Modal (recommended)
+Use one of these four paths:
+
+### 1) Local + llama.cpp
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -U pip setuptools wheel
+pip install sigilant-sweep
+```
+
+If `llama-cli` is not on `PATH`, set it explicitly:
+
+```bash
+export SIGILANT_LLAMA_CLI=/abs/path/to/llama-cli
+```
+
+Sanity run:
+
+```bash
+sigilant-sweep run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend local \
+  --engine llama.cpp \
+  --configs 1 \
+  --trials 1
+```
+
+### 2) Local + vLLM (Linux + CUDA)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -U pip setuptools wheel
+pip install "sigilant-sweep[vllm]"
+```
+
+Set family repo IDs (required for full-family runs):
+
+```bash
+export SIGILANT_VLLM_FP16_BASELINE_REPO="microsoft/Phi-3.5-mini-instruct"
+export SIGILANT_VLLM_INT8_W8A8_REPO="anhbn/Phi-3.5-mini-instruct-quantized.w8a8"
+export SIGILANT_VLLM_AWQ4_MARLIN_REPO="thesven/Phi-3.5-mini-instruct-awq"
+export SIGILANT_VLLM_GPTQ4_MARLIN_REPO="thesven/Phi-3.5-mini-instruct-GPTQ-4bit"
+```
+
+Sanity run:
+
+```bash
+sigilant-sweep run \
+  --model microsoft/Phi-3.5-mini-instruct \
+  --backend local \
+  --engine vllm \
+  --configs 1 \
+  --trials 1
+```
+
+### 3) Modal + llama.cpp
 
 ```bash
 python3 -m venv .venv
@@ -83,7 +137,7 @@ modal token new
 sigilant-sweep info
 ```
 
-Run a cheap sanity test:
+Sanity run:
 
 ```bash
 sigilant-sweep run \
@@ -95,29 +149,39 @@ sigilant-sweep run \
   --trials 1
 ```
 
-### Golden path: Local llama.cpp
+### 4) Modal + vLLM
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -U pip setuptools wheel
-pip install sigilant-sweep
+pip install "sigilant-sweep[modal]"
+modal token new
 ```
 
-Requirements:
-- `llama-cli` must be installed and discoverable on `PATH`, or set `SIGILANT_LLAMA_CLI=/abs/path/to/llama-cli`.
-- Local backend is compute-dependent; on CPU-only machines it will be slow.
+Set family repo IDs (required for full-family runs):
 
-### Compatibility matrix (current recommendation)
+```bash
+unset SIGILANT_VLLM_FAMILY_REPOS
+export SIGILANT_VLLM_FP16_BASELINE_REPO="microsoft/Phi-3.5-mini-instruct"
+export SIGILANT_VLLM_INT8_W8A8_REPO="anhbn/Phi-3.5-mini-instruct-quantized.w8a8"
+export SIGILANT_VLLM_AWQ4_MARLIN_REPO="thesven/Phi-3.5-mini-instruct-awq"
+export SIGILANT_VLLM_GPTQ4_MARLIN_REPO="thesven/Phi-3.5-mini-instruct-GPTQ-4bit"
+```
 
-| Scenario | Recommended install | Notes |
-|---|---|---|
-| Any OS, Modal-only | `pip install "sigilant-sweep[modal]"` | Best first-run success path |
-| Any OS, HF-only | `pip install "sigilant-sweep[hf]"` | For model listing/download integration |
-| Local llama.cpp | `pip install sigilant-sweep` | Requires external `llama-cli` binary |
-| Local vLLM | `pip install "sigilant-sweep[vllm]"` | Linux + CUDA only |
+Sanity run:
 
-### Known install issue (Intel macOS + Modal extras)
+```bash
+sigilant-sweep run \
+  --model microsoft/Phi-3.5-mini-instruct \
+  --backend modal \
+  --engine vllm \
+  --hardware l4 \
+  --configs 1 \
+  --trials 1
+```
+
+### Intel macOS note (Modal extras)
 
 If you see `Failed building wheel for cbor2`:
 
@@ -151,7 +215,7 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3
 sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --json
 ```
 
-## Modal run example
+## Example: Modal run (llama.cpp)
 
 ```bash
 sigilant-sweep run \
@@ -163,20 +227,60 @@ sigilant-sweep run \
   --agent-smoke
 ```
 
-Output:
-- ranked configs with score and status
-- baseline delta line
-- `sigilant_results.json`, `sigilant_summary.md`, `sigilant_frontier.svg`
-- optional smoke diagnosis (`model_limited` vs `harness_limited` vs `mixed`)
+Expected output:
+- ranked config table
+- recommended config + baseline delta
+- artifacts: `sigilant_results.json`, `sigilant_summary.md`, `sigilant_frontier.svg`, `sigilant_terminal.txt`
 
-Stability notes:
-- Default is fixed `--trials 12` for stronger stability out of the box.
-- You can override `--trials` manually for faster/cheaper or deeper runs.
-- Artifacts include confidence inputs: top-2 gap and variance proxy.
+Example output (truncated):
+
+```text
+Config                                           TPS     TTFT      ITL     PPL   Score
+──────────────────────────────────────────────────────────────────────────────────────
+Q4_K_M · ctx:16384 · kv:k16v16 · long  ← best   74.1   1728ms   13.5ms   14.32     97
+Q4_K_M · ctx:8192 · kv:k16v16 · default         74.0   1729ms   13.5ms   14.32     97
+Q5_K_M · ctx:8192 · kv:k16v16 · default         71.4   1792ms   14.0ms   13.61     97
+
+Best config:  Q4_K_M · ctx:16384 · kv:k16v16 · long
+Auto baseline compare (auto:max_precision(Q8_0)): score Δ=+6.00  TPS Δ=+8.20  TTFT Δ=-233.9ms  PPL Δ=+0.19
+Artifacts: artifacts/runs/20260524_171722/sigilant_results.json,
+          artifacts/runs/20260524_171722/sigilant_summary.md,
+          artifacts/runs/20260524_171722/sigilant_frontier.svg,
+          artifacts/runs/20260524_171722/sigilant_terminal.txt
+```
+
+Example artifacts bundle:
+
+```text
+artifacts/runs/20260524_171722/
+  ├── sigilant_results.json
+  ├── sigilant_summary.md
+  ├── sigilant_frontier.svg
+  └── sigilant_terminal.txt
+```
+
+## Live run examples
+
+Full vLLM sweep example (Modal, L4):
+
+![vLLM full sweep terminal output](docs/assets/live_vllm_full_sweep.png)
+
+Depth profile example (8k/14k/28k passes):
+
+![vLLM depth profile terminal output](docs/assets/live_vllm_depth_profile.png)
+
+Notes:
+- Captures below are from real runs of this repository.
+- Results vary by model, prompt set, hardware, and backend.
+
+Run notes:
+- Default `--trials` is 12.
+- Lower `--trials` for faster/cheaper sweeps; increase for stability.
+- Artifacts include confidence inputs (for example top-2 gap).
 
 ## Common run patterns
 
-Single config only:
+### llama.cpp: single config
 
 ```bash
 sigilant-sweep run \
@@ -189,7 +293,7 @@ sigilant-sweep run \
   --only-config "Q4_K_M,8192,k16v16,default"
 ```
 
-Depth profile:
+### llama.cpp depth profile
 
 ```bash
 sigilant-sweep run \
@@ -199,13 +303,13 @@ sigilant-sweep run \
   --hardware l4 \
   --configs 16 \
   --trials 5 \
-  --benchmark-mode depth_profile \
+  --evaluation-mode depth_profile \
   --depth-prompt-8k prompts/hard_quality_8k_prompt.txt \
   --depth-prompt-14k prompts/hard_quality_14k_prompt.txt \
   --depth-prompt-28k prompts/hard_quality_28k_prompt.txt
 ```
 
-Run with smoke check:
+### llama.cpp with structured-output smoke
 
 ```bash
 sigilant-sweep run \
@@ -216,6 +320,24 @@ sigilant-sweep run \
   --configs 16 \
   --trials 5 \
   --agent-smoke
+```
+
+### vLLM: full-family sweep (Modal)
+
+```bash
+unset SIGILANT_VLLM_FAMILY_REPOS
+export SIGILANT_VLLM_FP16_BASELINE_REPO="microsoft/Phi-3.5-mini-instruct"
+export SIGILANT_VLLM_INT8_W8A8_REPO="anhbn/Phi-3.5-mini-instruct-quantized.w8a8"
+export SIGILANT_VLLM_AWQ4_MARLIN_REPO="thesven/Phi-3.5-mini-instruct-awq"
+export SIGILANT_VLLM_GPTQ4_MARLIN_REPO="thesven/Phi-3.5-mini-instruct-GPTQ-4bit"
+
+sigilant-sweep run \
+  --model microsoft/Phi-3.5-mini-instruct \
+  --backend modal \
+  --engine vllm \
+  --hardware l4 \
+  --configs 16 \
+  --trials 1
 ```
 
 ## Execution model
@@ -241,74 +363,7 @@ sigilant-sweep run \
 `pip uninstall -y modal cbor2 && pip install --only-binary=:all: "cbor2==5.6.5" && pip install "sigilant-sweep[modal]"`.
 
 - vLLM local failures on macOS/Windows
-: expected; use Modal backend for vLLM.
-
-## Release checklist (clean run)
-
-Run this sequence exactly from repo root.
-
-### 1) Preflight
-
-```bash
-source .venv/bin/activate
-bash scripts/release_preflight.sh <new_version>
-```
-
-This checks:
-- active directory is repo root
-- required files exist
-- `sigilant_runner/__init__.py` derives version from package metadata
-- version equals target argument
-
-### 2) Commit release changes
-
-```bash
-git add README.md pyproject.toml
-git commit -m "release: bump to <new_version>"
-git push origin main
-```
-
-### 3) Build, upload, index-check, fresh-venv verify (single command)
-
-```bash
-bash scripts/release_verify.sh <new_version>
-```
-
-`release_verify.sh` runs:
-- preflight
-- clean build (`dist/`, `build/`)
-- twine check + upload for exact target artifacts
-- PyPI simple-index polling until target is visible
-- fresh-venv install check (`pip show`, `sigilant-sweep --version`)
-
-### 4) Runtime sanity
-
-llama.cpp Modal:
-
-```bash
-sigilant-sweep run \
-  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
-  --backend modal \
-  --engine llama.cpp \
-  --hardware l4 \
-  --configs 1 \
-  --trials 1
-```
-
-vLLM Modal:
-
-```bash
-export SIGILANT_VLLM_FAMILY_REPOS='{"FP16_BASELINE":"microsoft/Phi-3.5-mini-instruct"}'
-sigilant-sweep run \
-  --model microsoft/Phi-3.5-mini-instruct \
-  --backend modal \
-  --engine vllm \
-  --hardware a10g \
-  --configs 1 \
-  --trials 1
-```
-
----
+: expected; run vLLM through Modal.
 
 ## Hardware options
 
@@ -316,7 +371,6 @@ sigilant-sweep run \
 |----------------------------|------------------------|
 | `--backend local`          | Your machine (default) |
 | `--backend modal`          | Modal cloud (your account) |
-| `--backend runpod`         | RunPod cloud (your account) |
 
 | `--hardware` value  | GPU              | VRAM  |
 |---------------------|------------------|-------|
@@ -336,7 +390,7 @@ sigilant-sweep run \
 
 | Flag                 | Supported Backends           | Notes |
 |----------------------|------------------------------|-------|
-| `--engine llama.cpp` | `local`, `modal`, `runpod`   | GGUF-based flow |
+| `--engine llama.cpp` | `local`, `modal`             | GGUF-based flow |
 | `--engine vllm`      | `local`, `modal`             | Linux + CUDA required |
 
 ---
@@ -347,13 +401,18 @@ sigilant-sweep run \
 sigilant-sweep run [OPTIONS]
 
   --model      -m    HuggingFace repo ID or local .gguf path   [required]
-  --backend    -b    local | modal | runpod                     [default: local]
+  --backend    -b    local | modal                              [default: local]
   --engine     -e    llama.cpp | vllm                           [default: llama.cpp]
   --hardware         GPU target (see table above)               [default: auto]
   --params-b         Model size in billions (for VRAM estimate) [default: 7.0]
   --configs          Max number of configs to sweep             [default: 16]
   --confidence-target  low | medium | high                      [default: medium] (reporting only)
   --score-profile      balanced | latency | quality             [default: balanced]
+  --evaluation-mode      ranking | depth_profile                [default: ranking]
+  --depth-prompt-8k      Path to 8k prompt file                 [default: prompts/hard_quality_8k_prompt.txt]
+  --depth-prompt-14k     Path to 14k prompt file                [default: prompts/hard_quality_14k_prompt.txt]
+  --depth-prompt-28k     Path to 28k prompt file                [default: prompts/hard_quality_28k_prompt.txt]
+  --only-config          QUANT,CTX,KV,REGIME                    [optional]
   --trials             Trials per config                        [default: 12]
   --json             Also write results to sigilant_results.json
 
@@ -362,25 +421,11 @@ sigilant-sweep info     Show detected hardware and installed engines
 sigilant-sweep --version
 ```
 
----
-
-## Cloud backend setup
-
-### Modal
+To check the exact options in your installed version:
 
 ```bash
-pip install 'sigilant-sweep[modal]'
-modal token new          # saves credentials to ~/.modal.toml
-sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend modal --hardware a10g
-```
-
-### RunPod
-
-```bash
-pip install 'sigilant-sweep[runpod]'
-export RUNPOD_API_KEY=<your-key>
-export SIGILANT_RUNPOD_ENDPOINT_ID=<your-predeployed-endpoint-id>
-sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod --engine llama.cpp --hardware rtx4090
+sigilant-sweep --help
+sigilant-sweep run --help
 ```
 
 ---
@@ -403,32 +448,34 @@ sigilant-sweep run --model mistralai/Mistral-7B-Instruct-v0.3 --backend runpod -
 - Prompt injection resistance
 - Long-context retrieval (NIAH)
 
-PPL catches gross quantization degradation. It does not validate production agent safety.
+PPL is a lightweight quality proxy. It is not a safety or capability evaluation.
 
 Prompt corpus note:
-- Prompt and corpus files in `prompts/` are benchmark assets maintained for this harness.
-- They are intended for relative configuration comparison, not as a standardized external evaluation set.
+- Prompt and corpus files in `prompts/` are evaluation assets for this harness.
+- They are for relative config comparison, not a standard external evaluation set.
 
 ## Verification and reproducibility
 
 - Keep raw artifacts with reported tables (`sigilant_results.json`, `sigilant_terminal.txt`).
-- Re-run top candidates with `--only-config` before final selection.
+- Re-run top candidates with `--only-config` before final selection:
+
+```bash
+sigilant-sweep run \
+  --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
+  --backend modal \
+  --engine llama.cpp \
+  --hardware l4 \
+  --configs 16 \
+  --trials 3 \
+  --only-config "Q4_K_M,16384,k16v16,long"
+```
+
 - Separate infra/control-plane failures from model/runtime failures.
 - Treat PPL as a ranking proxy within comparable runs.
 
-## vLLM status
-
-- Implemented:
-  - local vLLM sweep
-  - Modal vLLM sweep (HF model localized at run start and reused through the sweep)
-- Not implemented yet:
-  - RunPod vLLM backend
-  - vLLM structured-output smoke
-
-PPL corpus quality note:
-- Current PPL corpus is intentionally lightweight and should be treated as a coarse proxy.
-- For close winners, a small/synthetic corpus can under-separate configs.
-- Use higher trials for stability, and treat PPL as directional unless you swap in a larger, domain-representative corpus.
+PPL corpus note:
+- The default PPL corpus is lightweight and coarse.
+- Close winners may need higher trials and/or a larger domain-specific corpus.
 
 Boundary:
 - OSS `sigilant-sweep`: config ranking, runtime metrics, and lightweight smoke triage.

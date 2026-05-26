@@ -1,6 +1,6 @@
 """RunPod Serverless backend.
 
-Runs the benchmark on RunPod consumer or datacenter GPUs.
+Runs the evaluation on RunPod consumer or datacenter GPUs.
 Install:  pip install 'sigilant-sweep[runpod]'
 Auth:     export RUNPOD_API_KEY=<your-key>
 
