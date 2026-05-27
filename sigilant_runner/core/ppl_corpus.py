@@ -17,6 +17,9 @@ _FALLBACK_PPL_CORPUS = (
 def load_shared_ppl_corpus() -> str:
     """Load the canonical PPL corpus used across engines/backends."""
     candidates = [
+        # Packaged inside the wheel (works for pip install)
+        Path(__file__).resolve().parent.parent / "data" / "ppl_corpus_250.txt",
+        # Legacy: repo root prompts/ (works when run directly from the repo)
         Path("prompts/ppl_corpus_250.txt"),
         Path(__file__).resolve().parents[2] / "prompts" / "ppl_corpus_250.txt",
     ]
