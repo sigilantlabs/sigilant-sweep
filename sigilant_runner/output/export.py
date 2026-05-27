@@ -153,7 +153,7 @@ def _build_md(payload: Dict[str, Any]) -> str:
     repro = ctx.get("repro_command")
 
     lines = [
-        "# Sigilant Runner Summary",
+        "# Sigilant Sweep Summary",
         "",
         f"- Model: `{ctx.get('model')}`",
         f"- Backend/Engine: `{ctx.get('backend')}` / `{ctx.get('engine')}`",
@@ -172,6 +172,13 @@ def _build_md(payload: Dict[str, Any]) -> str:
             f"- SHA12: `{ctx.get('evaluation_prompt_sha12')}`",
             "",
         ]
+    depth_prompt_ests = ctx.get("evaluation_depth_prompt_tokens_est")
+    if isinstance(depth_prompt_ests, dict) and depth_prompt_ests:
+        lines += ["## Depth Prompt Provenance"]
+        for key in ("8k", "14k", "28k"):
+            if key in depth_prompt_ests:
+                lines.append(f"- `{key}` tokens (est): `{depth_prompt_ests.get(key)}`")
+        lines += [""]
     if best:
         lines += [
             "## Winner",
@@ -333,6 +340,15 @@ def _build_frontier_svg(results: List[RunResult], context: Optional[Dict[str, An
     def short_kv(kv: str) -> str:
         return "k16v16" if (kv or "").lower() == "k16v16" else "k8v8"
 
+    def compact_label(r: RunResult) -> str:
+        q = short_q((r.config.quant_label or "").upper())
+        c = int((r.config.context or 0) // 1024)
+        return f"{q} {c}k {short_kv(r.config.kv_type)}"
+
+    def clip_text(s: str, limit: int = 48) -> str:
+        t = str(s or "")
+        return t if len(t) <= limit else (t[: max(0, limit - 1)] + "…")
+
     QCOL = {
         "Q5_K_M": "#1E8E2E", "Q4_K_M": "#E59D0A", "Q3_K_M": "#E12121",
         "Q8_0": "#114FBE", "IQ3_M": "#188A3B",
@@ -347,15 +363,44 @@ def _build_frontier_svg(results: List[RunResult], context: Optional[Dict[str, An
     rank_map = {id(r): i + 1 for i, r in enumerate(
         sorted(ok, key=lambda r: r.score or -1e9, reverse=True))}
 
-    # Dynamic insight: compare fastest-TTFT config vs winner
+    # Dynamic insight: baseline-aware winner callout when possible.
     _fl = f"{short_q((fastest.config.quant_label or '').upper())} {fastest.config.context // 1024}k {short_kv(fastest.config.kv_type)}"
     _wl = f"{short_q((winner.config.quant_label or '').upper())}  {winner.config.context // 1024}k {short_kv(winner.config.kv_type)}"
-    if id(fastest) == id(winner):
-        _insight = [f"{_fl} wins", "fastest and best composite.", ""]
-    elif fastest.ppl is not None and winner.ppl is not None and fastest.ppl > winner.ppl:
-        _insight = [f"{_fl} is faster,", "but smaller bubble (higher PPL)", "lowers composite score."]
-    else:
-        _insight = [f"{_fl} has lowest TTFT,", f"but {_wl} wins on", "composite score."]
+    _insight = None
+    # Prefer max-precision quant baseline (Q8_0 for llama.cpp, FP16 for vLLM).
+    b_candidates = [r for r in ok if (r.config.quant_label or "").upper() in {"Q8_0", "FP16_BASELINE"}]
+    baseline = max(b_candidates, key=lambda r: (r.score or -1e9)) if b_candidates else None
+    if baseline and baseline.ttft_ms is not None and winner.ttft_ms is not None:
+        d_ttft = float(baseline.ttft_ms) - float(winner.ttft_ms)
+        w_lbl = compact_label(winner)
+        b_lbl = compact_label(baseline)
+        if baseline.ppl is not None and winner.ppl is not None:
+            d_ppl = float(winner.ppl) - float(baseline.ppl)
+            if d_ppl > 0:
+                _insight = [
+                    clip_text(f"{w_lbl} wins."),
+                    clip_text(f"Beats {b_lbl} by {abs(d_ttft):.0f}ms TTFT"),
+                    clip_text(f"with {abs(d_ppl):.2f} PPL degradation."),
+                ]
+            else:
+                _insight = [
+                    clip_text(f"{w_lbl} wins."),
+                    clip_text(f"Beats {b_lbl} by {abs(d_ttft):.0f}ms TTFT"),
+                    clip_text(f"and improves PPL by {abs(d_ppl):.2f}."),
+                ]
+        else:
+            _insight = [
+                clip_text(f"{w_lbl} wins."),
+                clip_text(f"Beats {b_lbl} by {abs(d_ttft):.0f}ms TTFT."),
+                "",
+            ]
+    if _insight is None:
+        if id(fastest) == id(winner):
+            _insight = [f"{_fl} wins", "fastest and best composite.", ""]
+        elif fastest.ppl is not None and winner.ppl is not None and fastest.ppl > winner.ppl:
+            _insight = [f"{_fl} is faster,", "but smaller bubble (higher PPL)", "lowers composite score."]
+        else:
+            _insight = [f"{_fl} has lowest TTFT,", f"but {_wl} wins on", "composite score."]
 
     # Legend quant families — only those present in this run
     _present = {(r.config.quant_label or "").upper() for r in ok}
@@ -376,7 +421,7 @@ def _build_frontier_svg(results: List[RunResult], context: Optional[Dict[str, An
     # ── Title ─────────────────────────────────────────────────────────────────
     parts.append(
         f"<text x='{w // 2}' y='46' fill='#111' font-size='26' font-family='Arial' "
-        f"font-weight='700' text-anchor='middle'>Sigilant Runner Frontier{rl}</text>"
+        f"font-weight='700' text-anchor='middle'>Sigilant Sweep Frontier{rl}</text>"
     )
 
     # ── Grid + tick labels ────────────────────────────────────────────────────

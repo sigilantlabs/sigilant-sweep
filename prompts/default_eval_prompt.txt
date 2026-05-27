@@ -1,0 +1,1 @@
+Explain the key architectural differences between transformer encoder and decoder models. Include details about attention mechanisms, typical use cases, and how self-attention differs from cross-attention.

@@ -500,7 +500,7 @@ PPL corpus note:
 
 Boundary:
 - OSS `sigilant-sweep`: config ranking, runtime metrics, and lightweight smoke triage.
-- For broader capability/safety validation on production workloads, use [Sigilant Optimizer](https://sigilantlabs.com/optimize).
+- For broader capability/safety validation on production workloads, use [Sigilant Optimizer](https://sigilantlabs.com).
 
 ### Score profiles
 

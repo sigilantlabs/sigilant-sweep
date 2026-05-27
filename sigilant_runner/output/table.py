@@ -117,5 +117,5 @@ def print_results_table(results: List[RunResult], *, profile: str = "balanced", 
     console.print("[dim]  Structured-output smoke helps triage model-limited vs harness-limited issues.[/dim]")
     console.print("[dim]  Full production safety and long-context certification require Sigilant Optimizer.[/dim]")
     console.print()
-    console.print("[dim]  → sigilantlabs.com/optimize[/dim]")
+    console.print("[dim]  → sigilantlabs.com[/dim]")
     console.print()

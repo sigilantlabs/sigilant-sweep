@@ -259,6 +259,23 @@ def run(
     # Score ranking-pass results immediately so depth bucket winner(8k) can be derived.
     results = compute_scores(results, profile=profile)
 
+    def _runtime_prompt_tokens_est(run_rows: List[RunResult]) -> Optional[int]:
+        vals: List[int] = []
+        for rr in run_rows:
+            pre = getattr(rr, "preflight", None) or {}
+            logs = pre.get("trial_logs") if isinstance(pre, dict) else None
+            if not isinstance(logs, list):
+                continue
+            for t in logs:
+                if not isinstance(t, dict):
+                    continue
+                v = t.get("prompt_tokens_est")
+                if isinstance(v, int) and v > 0:
+                    vals.append(v)
+        if not vals:
+            return None
+        return int(round(sum(vals) / len(vals)))
+
     depth_profile_payload = None
     if mode == "depth_profile":
         # 8k was already executed as the ranking pass above; do not rerun it.
@@ -274,6 +291,7 @@ def run(
             depth_runs.append({
                 "depth_label": "8k",
                 "prompt_path": str(Path(depth_prompt_8k).resolve()) if Path(depth_prompt_8k).exists() else depth_prompt_8k,
+                "prompt_tokens_est": _runtime_prompt_tokens_est(results),
                 "error": None,
                 "winner": (dw.config.label() if dw else None),
                 "results": [
@@ -296,6 +314,7 @@ def run(
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": dpath,
+                        "prompt_tokens_est": None,
                         "error": "prompt_missing",
                         "winner": None,
                         "results": [],
@@ -309,6 +328,7 @@ def run(
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": str(p.resolve()),
+                        "prompt_tokens_est": _runtime_prompt_tokens_est(dresults),
                         "error": None,
                         "winner": (dw.config.label() if dw else None),
                         "results": [
@@ -331,6 +351,7 @@ def run(
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": str(p.resolve()),
+                        "prompt_tokens_est": None,
                         "error": f"{'infra_failed' if is_infra else type(exc).__name__}: {exc}",
                         "winner": None,
                         "results": [],
@@ -451,23 +472,29 @@ def run(
             prompt_source = f"{prompt_path} (unreadable)"
     # Prefer actual runtime prompt token estimate reported by backend trial logs.
     runtime_prompt_token_ests: List[int] = []
-    for r in results:
-        pre = getattr(r, "preflight", None) or {}
-        logs = pre.get("trial_logs") if isinstance(pre, dict) else None
-        if not isinstance(logs, list):
-            continue
-        for t in logs:
-            if not isinstance(t, dict):
-                continue
-            v = t.get("prompt_tokens_est")
-            if isinstance(v, int) and v > 0:
-                runtime_prompt_token_ests.append(v)
+    rt_est = _runtime_prompt_tokens_est(results)
+    if rt_est is not None:
+        runtime_prompt_token_ests.append(rt_est)
     if runtime_prompt_token_ests:
         prompt_tokens_est = int(round(sum(runtime_prompt_token_ests) / len(runtime_prompt_token_ests)))
         if prompt_source == "default":
             prompt_source = "runtime:trial_logs"
 
-    if prompt_tokens_est is not None:
+    if mode == "depth_profile" and isinstance(depth_profile_payload, dict):
+        depth_map = {p.get("depth_label"): p.get("prompt_tokens_est") for p in (depth_profile_payload.get("passes") or [])}
+        depth_targets = {"8k": 8192, "14k": 14336, "28k": 28672}
+        weak_depths: List[str] = []
+        for dl, target in depth_targets.items():
+            est = depth_map.get(dl)
+            if isinstance(est, int) and est < int(0.5 * target):
+                weak_depths.append(f"{dl}~{est}")
+        if weak_depths:
+            console.print(
+                "[yellow]Prompt depth warning:[/yellow] weak depth stress detected for "
+                + ", ".join(weak_depths)
+                + "."
+            )
+    elif prompt_tokens_est is not None:
         max_ctx = max((r.config.context for r in results), default=None)
         if max_ctx and prompt_tokens_est < int(0.5 * max_ctx):
             console.print(
@@ -500,6 +527,11 @@ def run(
         "evaluation_prompt_chars": prompt_chars,
         "evaluation_prompt_sha12": prompt_sha12,
         "evaluation_prompt_tokens_est": prompt_tokens_est,
+        "evaluation_depth_prompt_tokens_est": (
+            {p.get("depth_label"): p.get("prompt_tokens_est") for p in (depth_profile_payload.get("passes") or [])}
+            if isinstance(depth_profile_payload, dict)
+            else None
+        ),
         "repro_command": repro_cmd,
     }
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -10,6 +10,8 @@ import time
 from typing import TYPE_CHECKING, Optional
 
 from ..core.metrics import RunConfig, RunResult
+from ..core.eval_prompt import load_default_eval_prompt
+from ..core.ppl_corpus import load_shared_ppl_corpus
 
 try:
     from llama_cpp import Llama
@@ -18,23 +20,10 @@ except ImportError:
     _HAS_LLAMA = False
 
 # Fixed prompt — same across all configs for fair comparison
-_BENCH_PROMPT = (
-    "Explain the key architectural differences between transformer encoder and decoder "
-    "models. Include details about attention mechanisms, typical use cases, and how "
-    "self-attention differs from cross-attention."
-)
+_BENCH_PROMPT = load_default_eval_prompt()
 
 # Small fixed corpus used for perplexity measurement
-_PPL_CORPUS = (
-    "The transformer architecture has revolutionized natural language processing. "
-    "Self-attention mechanisms allow models to weigh the importance of different words "
-    "in a sequence when producing representations. Large language models trained on "
-    "diverse corpora demonstrate emergent capabilities including in-context learning, "
-    "chain-of-thought reasoning, and instruction following. Quantization reduces model "
-    "precision to decrease memory footprint, with quality loss scaling as bit-width "
-    "decreases. The trade-off between inference speed and output fidelity depends "
-    "on model architecture, quantization scheme, and deployment context window."
-)
+_PPL_CORPUS = load_shared_ppl_corpus()
 
 
 class LlamaEngine:

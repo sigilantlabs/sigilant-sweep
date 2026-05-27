@@ -18,21 +18,12 @@ from pathlib import Path
 from typing import Optional
 
 from ..core.metrics import RunConfig, RunResult
+from ..core.eval_prompt import load_default_eval_prompt
+from ..core.ppl_corpus import load_shared_ppl_corpus
 
-_BENCH_PROMPT = (
-    "Explain the difference between transformer encoder and decoder models."
-)
+_BENCH_PROMPT = load_default_eval_prompt()
 
-_PPL_CORPUS = (
-    "The transformer architecture has revolutionized natural language processing. "
-    "Self-attention mechanisms allow models to weigh the importance of different words "
-    "in a sequence when producing representations. Large language models trained on "
-    "diverse corpora demonstrate emergent capabilities including in-context learning, "
-    "chain-of-thought reasoning, and instruction following. Quantization reduces model "
-    "precision to decrease memory footprint, with quality loss scaling as bit-width "
-    "decreases. The trade-off between inference speed and output fidelity depends "
-    "on model architecture, quantization scheme, and deployment context window."
-)
+_PPL_CORPUS = load_shared_ppl_corpus()
 
 _SEARCH_PATHS = [
     os.environ.get("SIGILANT_LLAMA_CLI", ""),

@@ -11,6 +11,8 @@ import sys
 from typing import List
 
 from ..core.metrics import RunConfig, RunResult
+from ..core.eval_prompt import load_default_eval_prompt
+from ..core.ppl_corpus import load_shared_ppl_corpus
 
 try:
     import modal
@@ -195,6 +197,7 @@ class ModalBackend:
             configs = data["configs"]
             trials  = int(data.get("trials", 1))
             bench_prompt = str(data.get("evaluation_prompt") or _BENCH_PROMPT)
+            ppl_corpus = str(data.get("ppl_corpus") or _PPL_CORPUS)
             print(f"[sigilant-sweep] {len(configs)} configs × {trials} trial(s)")
             print(
                 f"[sigilant-sweep] evaluation prompt: chars={len(bench_prompt)} "
@@ -250,7 +253,7 @@ class ModalBackend:
             def _evaluate_ppl(model_path: str):
                 """Simple PPL calculation: single llama-perplexity invocation."""
                 with tempfile.NamedTemporaryFile("w", delete=False, suffix=".txt") as f:
-                    f.write(_PPL_CORPUS)
+                    f.write(ppl_corpus)
                     tmp = f.name
                 try:
                     cmd = [
@@ -463,16 +466,23 @@ class ModalBackend:
                 "models. Include details about attention mechanisms, typical use cases, and how "
                 "self-attention differs from cross-attention."
             )
-            _PPL_PROMPT = (
+            _PPL_CORPUS = (
                 "The transcontinental rail corridor links ports, dry hubs, and inland manufacturers. "
                 "Schedulers rebalance freight lanes after weather disruptions, while dispatch software "
-                "re-optimizes routes to protect delivery SLAs and reduce idle dwell time across terminals."
+                "re-optimizes routes to protect delivery SLAs and reduce idle dwell time across terminals. "
+                "Warehouse teams coordinate inbound pallets with outbound appointments, balancing dock capacity "
+                "and labor shifts across peak windows. Carriers publish revised ETAs, and planners reroute urgent "
+                "loads to intermodal links when highway congestion exceeds thresholds. Exception workflows track "
+                "temperature excursions, seal integrity checks, and customs hold releases to reduce spoilage risk. "
+                "Demand forecasts are refreshed hourly with point-of-sale deltas, vendor confirmations, and weather "
+                "alerts so replenishment can prioritize constrained SKUs without overfilling downstream nodes."
             )
 
             # Separate startup timeout (model load + GPU init) from request timeout.
             _STARTUP_TIMEOUT_S = 300
             _REQUEST_TIMEOUT_S = 240
             _PPL_TIMEOUT_S = 60
+            _PPL_MIN_TOKENS = max(32, int(os.environ.get("SIGILANT_VLLM_PPL_MIN_TOKENS", "128")))
             _MIN_GEN_TOKENS = max(1, int(os.environ.get("SIGILANT_VLLM_MIN_GEN_TOKENS", "1")))
             _MEASURE_RETRIES = max(1, int(os.environ.get("SIGILANT_VLLM_MEASURE_RETRIES", "3")))
             _FORCE_MIN_TOKENS = max(1, int(os.environ.get("SIGILANT_VLLM_FORCE_MIN_TOKENS", "64")))
@@ -481,6 +491,7 @@ class ModalBackend:
             configs = data["configs"]
             trials = max(1, int(data.get("trials", 1)))
             bench_prompt = str(data.get("evaluation_prompt") or _BENCH_PROMPT)
+            ppl_corpus = str(data.get("ppl_corpus") or _PPL_CORPUS)
             repo_id = str(data.get("model_repo") or "").strip()
             family_repo_map = data.get("family_repo_map") or {}
             if not isinstance(family_repo_map, dict):
@@ -971,33 +982,22 @@ class ModalBackend:
                 try:
                     p_payload = {
                         "model": family_local_path,
-                        "prompt": _PPL_PROMPT,
-                        "max_tokens": 64,
+                        "prompt": ppl_corpus,
+                        # Measure prompt-token likelihood only; do not score generated continuation.
+                        "max_tokens": 1,
                         "temperature": 0.0,
                         "top_p": 1.0,
                         "seed": 42,
-                        "logprobs": 1,
+                        "prompt_logprobs": 1,
                     }
                     pr = requests.post(f"{base}/v1/completions", json=p_payload, timeout=_PPL_TIMEOUT_S)
                     if pr.ok:
                         body_j = pr.json() if pr.text else {}
                         ch0 = ((body_j.get("choices") or [{}])[0] or {})
                         vals = []
-                        # Preferred path: token logprobs for generated completion tokens.
-                        lp_obj = ch0.get("logprobs")
-                        if isinstance(lp_obj, dict):
-                            tlp = lp_obj.get("token_logprobs")
-                            if isinstance(tlp, list):
-                                for v in tlp:
-                                    try:
-                                        fv = float(v)
-                                        if math.isfinite(fv):
-                                            vals.append(fv)
-                                    except Exception:
-                                        continue
-                        # Fallback path: prompt_logprobs from some backends.
+                        # Preferred path: prompt token logprobs from fixed corpus text.
                         p_lp = ch0.get("prompt_logprobs")
-                        if not vals and isinstance(p_lp, list):
+                        if isinstance(p_lp, list):
                             for tok in p_lp:
                                 if not tok:
                                     continue
@@ -1035,8 +1035,13 @@ class ModalBackend:
                                             vals.append(ranked[0][1])
                                 except Exception:
                                     continue
-                        if vals:
+                        if len(vals) >= _PPL_MIN_TOKENS:
                             ppl = round(math.exp(-sum(vals) / len(vals)), 2)
+                        else:
+                            trial_log["ppl_insufficient_tokens"] = {
+                                "min_required": int(_PPL_MIN_TOKENS),
+                                "observed": int(len(vals)),
+                            }
                         trial_log["ppl_token_count"] = len(vals)
                         trial_log["ppl_response_status"] = pr.status_code
                     else:
@@ -1256,7 +1261,8 @@ class ModalBackend:
 
         # ── Submit ────────────────────────────────────────────────────────────
         family_repo_map = {}
-        evaluation_prompt = None
+        evaluation_prompt = load_default_eval_prompt()
+        ppl_corpus = load_shared_ppl_corpus()
         prompt_path = os.environ.get("SIGILANT_BENCH_PROMPT_FILE", "").strip()
         if prompt_path:
             try:
@@ -1292,6 +1298,7 @@ class ModalBackend:
             "model_repo": (configs[0].model_repo if configs else ""),
             "family_repo_map": family_repo_map,
             "evaluation_prompt": evaluation_prompt,
+            "ppl_corpus": ppl_corpus,
         })
         if self.engine == "vllm":
             print(f"[sigilant-sweep][vllm] family_repo_map={family_repo_map}")
