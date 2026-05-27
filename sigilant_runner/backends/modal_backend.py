@@ -259,6 +259,8 @@ class ModalBackend:
                     f.write(ppl_corpus)
                     tmp = f.name
                 try:
+                    import hashlib
+                    import time
                     cmd = [
                         _LLAMA_PPL,
                         "-m", model_path,
@@ -277,10 +279,31 @@ class ModalBackend:
                     ]
                     last_diag = {
                         "ppl_cmd": " ".join(cmd),
+                        "ppl_cmd_argv": cmd,
+                        "ppl_binary_path": _LLAMA_PPL,
+                        "ppl_model_path": model_path,
+                        "ppl_corpus_tmp_path": tmp,
+                        "ppl_corpus_chars": len(ppl_corpus or ""),
+                        "ppl_corpus_tokens_est": max(1, int(round(len(ppl_corpus or "") / 4.0))),
+                        "ppl_corpus_sha12": hashlib.sha256((ppl_corpus or "").encode("utf-8")).hexdigest()[:12],
                         "ppl_timeout_s": _PPL_TIMEOUT_S,
                         "ppl_retries": _PPL_RETRIES,
                     }
+                    try:
+                        v = subprocess.run(
+                            [_LLAMA_PPL, "--version"],
+                            text=True,
+                            capture_output=True,
+                            timeout=10,
+                            stdin=subprocess.DEVNULL,
+                        )
+                        last_diag["ppl_binary_version_rc"] = int(v.returncode)
+                        last_diag["ppl_binary_version_stdout"] = (v.stdout or "")
+                        last_diag["ppl_binary_version_stderr"] = (v.stderr or "")
+                    except Exception as exc:
+                        last_diag["ppl_binary_version_error"] = str(exc)
                     for attempt in range(1, _PPL_RETRIES + 1):
+                        t_start = time.monotonic()
                         proc = subprocess.run(
                             cmd,
                             text=True,
@@ -288,11 +311,15 @@ class ModalBackend:
                             timeout=_PPL_TIMEOUT_S,
                             stdin=subprocess.DEVNULL,
                         )
+                        elapsed_ms = (time.monotonic() - t_start) * 1000.0
                         blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
                         last_diag = {
                             **last_diag,
                             "ppl_attempt": attempt,
                             "ppl_rc": int(proc.returncode),
+                            "ppl_elapsed_ms": round(elapsed_ms, 3),
+                            "ppl_stdout": (proc.stdout or ""),
+                            "ppl_stderr": (proc.stderr or ""),
                             "ppl_stdout_head": (proc.stdout or "")[:500],
                             "ppl_stderr_head": (proc.stderr or "")[:500],
                         }
@@ -307,7 +334,8 @@ class ModalBackend:
                             return val, {**last_diag, "ppl_parse_ok": True}
                     print(
                         f"[sigilant-sweep]   PPL unavailable rc={last_diag.get('ppl_rc')} "
-                        f"head={((last_diag.get('ppl_stdout_head') or '') + (last_diag.get('ppl_stderr_head') or ''))[:300]!r}"
+                        f"head={((last_diag.get('ppl_stdout_head') or '') + (last_diag.get('ppl_stderr_head') or ''))[:300]!r} "
+                        f"tail={((last_diag.get('ppl_stdout') or '') + (last_diag.get('ppl_stderr') or ''))[-300:]!r}"
                     )
                     return None, {**last_diag, "ppl_parse_ok": False}
                 except Exception as exc:
