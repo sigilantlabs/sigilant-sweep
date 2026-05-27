@@ -2,7 +2,7 @@
 
 # sigilant-sweep
 
-Evaluation orchestration for inference stacks (llama.cpp, vLLM): TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
+Evaluation orchestration for inference stacks (llama.cpp, vLLM) with Local and Modal backends: TPS, TTFT, ITL, PPL proxy, and artifacted comparisons.
 
 [![PyPI](https://img.shields.io/pypi/v/sigilant-sweep?style=for-the-badge)](https://pypi.org/project/sigilant-sweep/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-1f6feb?style=for-the-badge)](https://github.com/sigilantlabs/sigilant-sweep/blob/main/LICENSE)
@@ -52,7 +52,7 @@ pip install sigilant-sweep
 # Hugging Face integration only
 pip install 'sigilant-sweep[hf]'
 
-# With llama-cpp-python fallback (if you are not using llama-cli binary)
+# llama-cpp-python fallback only — not needed if llama-cli is on PATH
 pip install 'sigilant-sweep[llama]'
 
 # With llama-cpp-python fallback + CUDA acceleration
@@ -384,10 +384,14 @@ sigilant-sweep run \
 
 ## Hardware options
 
+Backend location:
+
 | Flag                       | Where it runs          |
 |----------------------------|------------------------|
 | `--backend local`          | Your machine (default) |
 | `--backend modal`          | Modal cloud (your account) |
+
+GPU targets:
 
 | `--hardware` value  | GPU              | VRAM  |
 |---------------------|------------------|-------|
