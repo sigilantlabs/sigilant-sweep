@@ -23,6 +23,15 @@ It provides:
 
 It is not a new inference runtime.
 
+## Why use this instead of running one-off engine commands
+
+- Runs a full config grid (`quant × context × KV`) with consistent run settings.
+- Uses trial-first rotated execution to reduce ordering bias across configs.
+- Ranks configs on a composite score (TPS, TTFT, PPL proxy), not a single metric.
+- Supports depth passes (8k/14k/28k prompts) for context-window behavior checks.
+- Adds a structured-output smoke gate for quick post-ranking sanity checks.
+- Exports reproducible artifacts (`json`, `md`, `svg`, terminal log) for review and sharing.
+
 ## Not in scope
 
 - custom kernels or scheduler innovation
@@ -43,10 +52,10 @@ pip install sigilant-sweep
 # Hugging Face integration only
 pip install 'sigilant-sweep[hf]'
 
-# With llama.cpp
+# With llama-cpp-python fallback (if you are not using llama-cli binary)
 pip install 'sigilant-sweep[llama]'
 
-# With llama.cpp + CUDA acceleration
+# With llama-cpp-python fallback + CUDA acceleration
 CMAKE_ARGS="-DGGML_CUDA=on" pip install 'sigilant-sweep[llama]'
 
 # With vLLM (Linux + CUDA only)
@@ -80,10 +89,18 @@ python3 -m pip install -U pip setuptools wheel
 pip install sigilant-sweep
 ```
 
+Local llama.cpp execution uses `llama-cli` binary by default.
+
 If `llama-cli` is not on `PATH`, set it explicitly:
 
 ```bash
 export SIGILANT_LLAMA_CLI=/abs/path/to/llama-cli
+```
+
+If you do not have a llama-cli binary, install Python fallback:
+
+```bash
+pip install "sigilant-sweep[llama]"
 ```
 
 Sanity run:

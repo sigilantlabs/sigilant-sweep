@@ -55,8 +55,34 @@ def _check_local() -> None:
     else:
         console.print(f"  {_WARN} No GPU detected. CPU-only runs will be very slow")
 
-    _check_package("llama_cpp", "llama-cpp-python", "sigilant-sweep[llama]",
-                   note="For CUDA: CMAKE_ARGS=\"-DGGML_CUDA=on\" pip install 'sigilant-sweep[llama]'")
+    # Local llama.cpp path prefers llama-cli binary and falls back to llama-cpp-python.
+    # Do not present llama-cpp-python as hard-required when llama-cli is already available.
+    try:
+        from .engines.llama_cli_engine import find_binary
+        llama_cli = find_binary()
+    except Exception:
+        llama_cli = None
+
+    if llama_cli:
+        console.print(f"  {_TICK} llama-cli detected on PATH  [dim]({llama_cli})[/dim]")
+        _check_package(
+            "llama_cpp",
+            "llama-cpp-python",
+            "sigilant-sweep[llama]",
+            note="Optional fallback path if llama-cli is unavailable",
+            optional=True,
+        )
+    else:
+        console.print(f"  {_WARN} llama-cli not detected on PATH")
+        console.print("    Set [bold]SIGILANT_LLAMA_CLI[/bold] to your llama-cli binary, or install fallback:")
+        console.print("      pip install 'sigilant-sweep[llama]'")
+        _check_package(
+            "llama_cpp",
+            "llama-cpp-python",
+            "sigilant-sweep[llama]",
+            note="For CUDA: CMAKE_ARGS=\"-DGGML_CUDA=on\" pip install 'sigilant-sweep[llama]'",
+            optional=False,
+        )
     _check_package("vllm", "vLLM", "sigilant-sweep[vllm]",
                    note="Linux + CUDA only", optional=True)
 
