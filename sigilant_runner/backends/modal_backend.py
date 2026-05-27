@@ -273,14 +273,26 @@ class ModalBackend:
                         stdin=subprocess.DEVNULL,
                     )
                     blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
-                    m = re.search(r"Final estimate:\s*PPL\s*=\s*([0-9]+(?:\.[0-9]+)?)", blob, re.IGNORECASE)
-                    if not m:
-                        m = re.search(r"\bPPL\s*=\s*([0-9]+(?:\.[0-9]+)?)\b", blob, re.IGNORECASE)
+                    patterns = [
+                        r"Final estimate:\s*PPL\s*=\s*([0-9]+(?:\.[0-9]+)?)",
+                        r"Final estimate\s*PPL\s*=\s*([0-9]+(?:\.[0-9]+)?)",
+                        r"\bPPL\s*=\s*([0-9]+(?:\.[0-9]+)?)\b",
+                        r"\bperplexity\s*:\s*([0-9]+(?:\.[0-9]+)?)\b",
+                        r"\bperplexity\s*=\s*([0-9]+(?:\.[0-9]+)?)\b",
+                    ]
+                    m = None
+                    for pat in patterns:
+                        m = re.search(pat, blob, re.IGNORECASE)
+                        if m:
+                            break
                     if m:
                         val = round(float(m.group(1)), 2)
                         print(f"[sigilant-sweep]   PPL={val}")
                         return val
-                    print(f"[sigilant-sweep]   PPL unavailable rc={proc.returncode} tail={blob[-300:]!r}")
+                    print(
+                        f"[sigilant-sweep]   PPL unavailable rc={proc.returncode} "
+                        f"head={blob[:300]!r} tail={blob[-300:]!r}"
+                    )
                     return None
                 except Exception as exc:
                     print(f"[sigilant-sweep]   PPL error: {exc}")
