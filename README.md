@@ -74,6 +74,20 @@ If your pip config points to a private/stale mirror, force official PyPI:
 pip install --index-url https://pypi.org/simple sigilant-sweep
 ```
 
+CLI path sanity check (recommended in every fresh venv):
+
+```bash
+hash -r
+which sigilant-sweep
+sigilant-sweep --version
+```
+
+If that points outside your active venv, use the explicit binary:
+
+```bash
+$VIRTUAL_ENV/bin/sigilant-sweep --version
+```
+
 ---
 
 ## Run paths

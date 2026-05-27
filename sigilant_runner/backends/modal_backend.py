@@ -250,8 +250,11 @@ class ModalBackend:
                     return tps, ttft_ms, itl_ms
                 return tps, ttft_ms, itl_ms
 
+            _PPL_TIMEOUT_S = max(90, int(os.environ.get("SIGILANT_LLAMA_PPL_TIMEOUT_S", "180")))
+            _PPL_RETRIES = max(1, int(os.environ.get("SIGILANT_LLAMA_PPL_RETRIES", "2")))
+
             def _evaluate_ppl(model_path: str):
-                """Simple PPL calculation: single llama-perplexity invocation."""
+                """Simple PPL calculation: llama-perplexity invocation with diagnostics."""
                 with tempfile.NamedTemporaryFile("w", delete=False, suffix=".txt") as f:
                     f.write(ppl_corpus)
                     tmp = f.name
@@ -265,14 +268,6 @@ class ModalBackend:
                         "-ngl", "999",
                         "-f", tmp,
                     ]
-                    proc = subprocess.run(
-                        cmd,
-                        text=True,
-                        capture_output=True,
-                        timeout=90,
-                        stdin=subprocess.DEVNULL,
-                    )
-                    blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
                     patterns = [
                         r"Final estimate:\s*PPL\s*=\s*([0-9]+(?:\.[0-9]+)?)",
                         r"Final estimate\s*PPL\s*=\s*([0-9]+(?:\.[0-9]+)?)",
@@ -280,23 +275,48 @@ class ModalBackend:
                         r"\bperplexity\s*:\s*([0-9]+(?:\.[0-9]+)?)\b",
                         r"\bperplexity\s*=\s*([0-9]+(?:\.[0-9]+)?)\b",
                     ]
-                    m = None
-                    for pat in patterns:
-                        m = re.search(pat, blob, re.IGNORECASE)
+                    last_diag = {
+                        "ppl_cmd": " ".join(cmd),
+                        "ppl_timeout_s": _PPL_TIMEOUT_S,
+                        "ppl_retries": _PPL_RETRIES,
+                    }
+                    for attempt in range(1, _PPL_RETRIES + 1):
+                        proc = subprocess.run(
+                            cmd,
+                            text=True,
+                            capture_output=True,
+                            timeout=_PPL_TIMEOUT_S,
+                            stdin=subprocess.DEVNULL,
+                        )
+                        blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
+                        last_diag = {
+                            **last_diag,
+                            "ppl_attempt": attempt,
+                            "ppl_rc": int(proc.returncode),
+                            "ppl_stdout_head": (proc.stdout or "")[:500],
+                            "ppl_stderr_head": (proc.stderr or "")[:500],
+                        }
+                        m = None
+                        for pat in patterns:
+                            m = re.search(pat, blob, re.IGNORECASE)
+                            if m:
+                                break
                         if m:
-                            break
-                    if m:
-                        val = round(float(m.group(1)), 2)
-                        print(f"[sigilant-sweep]   PPL={val}")
-                        return val
+                            val = round(float(m.group(1)), 2)
+                            print(f"[sigilant-sweep]   PPL={val}")
+                            return val, {**last_diag, "ppl_parse_ok": True}
                     print(
-                        f"[sigilant-sweep]   PPL unavailable rc={proc.returncode} "
-                        f"head={blob[:300]!r} tail={blob[-300:]!r}"
+                        f"[sigilant-sweep]   PPL unavailable rc={last_diag.get('ppl_rc')} "
+                        f"head={((last_diag.get('ppl_stdout_head') or '') + (last_diag.get('ppl_stderr_head') or ''))[:300]!r}"
                     )
-                    return None
+                    return None, {**last_diag, "ppl_parse_ok": False}
                 except Exception as exc:
                     print(f"[sigilant-sweep]   PPL error: {exc}")
-                    return None
+                    return None, {
+                        "ppl_error": str(exc),
+                        "ppl_timeout_s": _PPL_TIMEOUT_S,
+                        "ppl_retries": _PPL_RETRIES,
+                    }
                 finally:
                     try:
                         os.remove(tmp)
@@ -385,6 +405,7 @@ class ModalBackend:
 
             # PPL is per GGUF file (quant level affects it; context/KV type do not)
             ppl_cache: dict = {}
+            ppl_diag_cache: dict = {}
 
             # Precompute model path + PPL per config (PPL shared by quant file).
             cfg_meta = []
@@ -393,9 +414,17 @@ class ModalBackend:
                 model_path = file_cache[key]
                 if key not in ppl_cache:
                     print(f"[sigilant-sweep] Computing PPL for {cfg['model_filename']} ...")
-                    ppl_cache[key] = _evaluate_ppl(model_path)
+                    ppl_val, ppl_diag = _evaluate_ppl(model_path)
+                    ppl_cache[key] = ppl_val
+                    ppl_diag_cache[key] = ppl_diag
                     print(f"[sigilant-sweep]   PPL={ppl_cache[key]}")
-                cfg_meta.append({"cfg": cfg, "key": key, "model_path": model_path, "ppl": ppl_cache[key]})
+                cfg_meta.append({
+                    "cfg": cfg,
+                    "key": key,
+                    "model_path": model_path,
+                    "ppl": ppl_cache[key],
+                    "ppl_diag": ppl_diag_cache.get(key) or {},
+                })
 
             starts = _trial_starts(len(configs), trials)
             buckets = [[] for _ in configs]
@@ -440,6 +469,7 @@ class ModalBackend:
                         "ttft_ms": round(_median(ttft_vals), 1),
                         "itl_ms":  round(_median(itl_vals), 2),
                         "ppl":     ppl,
+                        "preflight": (meta.get("ppl_diag") or {}),
                         "tps_p95": round(_percentile(tps_vals, 0.95), 1) if len(tps_vals) >= 4 else None,
                         "ttft_p95_ms": round(_percentile(ttft_vals, 0.95), 1) if len(ttft_vals) >= 4 else None,
                         "error":   None,
