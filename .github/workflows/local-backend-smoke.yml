@@ -57,13 +57,7 @@ jobs:
 
       - name: CI metric sanity check
         run: |
-          python3 -c "import json,sys; from pathlib import Path; p=Path('sigilant_results.json'); \
-if not p.exists(): print('sigilant_results.json missing'); sys.exit(1); \
-d=json.loads(p.read_text()); rows=d.get('results') or []; ok=[r for r in rows if r.get('succeeded')]; \
-if not ok: print('no succeeded results in JSON'); sys.exit(1); \
-w=ok[0]; tps=float(w.get('tps') or 0.0); ttft=float(w.get('ttft_ms') or 0.0); \
-print('winner row:', w); \
-sys.exit(0 if (tps>0.0 and ttft>0.0) else 1)"
+          python3 -c "import json,sys; from pathlib import Path; p=Path('sigilant_results.json'); d=json.loads(p.read_text()) if p.exists() else None; rows=(d.get('results') or []) if d else []; ok=[r for r in rows if r.get('succeeded')]; w=ok[0] if ok else None; tps=float((w or {}).get('tps') or 0.0); ttft=float((w or {}).get('ttft_ms') or 0.0); print('winner row:', w); sys.exit(0 if (p.exists() and w is not None and tps>0.0 and ttft>0.0) else 1)"
 
       - name: Upload run artifacts
         if: always()
