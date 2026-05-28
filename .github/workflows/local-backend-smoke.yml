@@ -10,6 +10,8 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     steps:
       - name: Checkout
@@ -50,4 +52,5 @@ jobs:
             --backend local \
             --engine llama.cpp \
             --configs 1 \
-            --trials 1
+            --trials 1 \
+            --only-config "Q5_K_M,16384,k16v16,long"
