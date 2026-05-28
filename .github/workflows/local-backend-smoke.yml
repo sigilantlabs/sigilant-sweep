@@ -57,28 +57,13 @@ jobs:
 
       - name: CI metric sanity check
         run: |
-          python3 - <<'PY'
-import json, sys
-from pathlib import Path
-p = Path("sigilant_results.json")
-if not p.exists():
-    print("sigilant_results.json missing")
-    sys.exit(1)
-d = json.loads(p.read_text())
-rows = d.get("results") or []
-ok = [r for r in rows if r.get("succeeded")]
-if not ok:
-    print("no succeeded results in JSON")
-    sys.exit(1)
-w = ok[0]
-tps = float(w.get("tps") or 0.0)
-ttft = float(w.get("ttft_ms") or 0.0)
-if tps <= 0.0 or ttft <= 0.0:
-    print("invalid parsed metrics: tps<=0 or ttft<=0")
-    print("winner row:", w)
-    sys.exit(1)
-print("metric sanity passed:", {"tps": tps, "ttft_ms": ttft})
-PY
+          python3 -c "import json,sys; from pathlib import Path; p=Path('sigilant_results.json'); \
+if not p.exists(): print('sigilant_results.json missing'); sys.exit(1); \
+d=json.loads(p.read_text()); rows=d.get('results') or []; ok=[r for r in rows if r.get('succeeded')]; \
+if not ok: print('no succeeded results in JSON'); sys.exit(1); \
+w=ok[0]; tps=float(w.get('tps') or 0.0); ttft=float(w.get('ttft_ms') or 0.0); \
+print('winner row:', w); \
+sys.exit(0 if (tps>0.0 and ttft>0.0) else 1)"
 
       - name: Upload run artifacts
         if: always()
