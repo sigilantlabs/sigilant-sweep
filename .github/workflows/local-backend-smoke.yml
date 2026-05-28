@@ -51,6 +51,6 @@ jobs:
             --model Qwen/Qwen2.5-1.5B-Instruct-GGUF \
             --backend local \
             --engine llama.cpp \
-            --configs 1 \
+            --configs 16 \
             --trials 1 \
             --only-config "Q5_K_M,16384,k16v16,long"
