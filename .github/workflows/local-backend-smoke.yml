@@ -26,27 +26,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl unzip
 
-          ASSET_URLS=(
-            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4263-bin-ubuntu-x64.zip"
-            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4300-bin-ubuntu-x64.zip"
-            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4350-bin-ubuntu-x64.zip"
-            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-bin-ubuntu-x64.zip"
-          )
+          API_URL="https://api.github.com/repos/ggml-org/llama.cpp/releases/latest"
+          ASSET_URL="$(
+            curl -fsSL "$API_URL" | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+assets = data.get("assets", [])
+cands = []
+for a in assets:
+    name = (a.get("name") or "").lower()
+    url = a.get("browser_download_url") or ""
+    if "ubuntu" in name and "x64" in name and name.endswith(".zip"):
+        cands.append((name, url))
+if not cands:
+    sys.exit(1)
+# Prefer assets that include binaries in the name
+cands.sort(key=lambda x: (("bin" not in x[0]), x[0]))
+print(cands[0][1])
+'
+          )"
 
-          FOUND=0
-          for U in "${ASSET_URLS[@]}"; do
-            echo "Trying llama.cpp asset: $U"
-            if curl -fL "$U" -o llama.zip; then
-              FOUND=1
-              break
-            fi
-          done
-
-          if [ "$FOUND" -ne 1 ]; then
-            echo "Could not download a llama.cpp release asset from known URLs."
-            echo "Update .github/workflows/local-backend-smoke.yml with current asset name."
+          if [ -z "${ASSET_URL:-}" ]; then
+            echo "Could not find a suitable ubuntu x64 llama.cpp release asset."
             exit 1
           fi
+
+          echo "Downloading llama.cpp asset: $ASSET_URL"
+          curl -fL "$ASSET_URL" -o llama.zip
 
           unzip -q llama.zip -d llama_bin
           chmod +x llama_bin/llama-cli
