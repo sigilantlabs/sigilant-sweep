@@ -34,7 +34,7 @@ jobs:
           git checkout "$LLAMA_CPP_REF"
           cd ..
           cmake -S llama.cpp -B llama.cpp/build -DGGML_CUDA=OFF
-          cmake --build llama.cpp/build --target llama-cli -j"$(nproc)"
+          cmake --build llama.cpp/build --target llama-cli llama-perplexity -j"$(nproc)"
 
           chmod +x llama.cpp/build/bin/llama-cli
           echo "$PWD/llama.cpp/build/bin" >> "$GITHUB_PATH"
@@ -72,11 +72,10 @@ jobs:
             --simple-io \
             2>&1 | tee llama_gen_raw.log
 
-          echo "=== llama-cli perplexity raw ==="
+          echo "=== llama-perplexity raw ==="
           printf "test corpus for ppl\n" > ppl_tmp.txt
-          llama-cli \
+          llama-perplexity \
             -m "$MODEL_PATH" \
-            --perplexity \
             --file ppl_tmp.txt \
             --ctx-size 512 \
             --no-display-prompt \
