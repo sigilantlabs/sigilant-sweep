@@ -78,7 +78,6 @@ jobs:
             -m "$MODEL_PATH" \
             --file ppl_tmp.txt \
             --ctx-size 512 \
-            --no-display-prompt \
             2>&1 | tee llama_ppl_raw.log
 
       - name: Local backend smoke
