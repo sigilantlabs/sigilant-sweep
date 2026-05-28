@@ -22,9 +22,32 @@ jobs:
 
       - name: Install llama.cpp binary
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y wget unzip
-          wget -q https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4263-bin-ubuntu-x64.zip -O llama.zip
+          sudo apt-get install -y curl unzip
+
+          ASSET_URLS=(
+            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4263-bin-ubuntu-x64.zip"
+            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4300-bin-ubuntu-x64.zip"
+            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-b4350-bin-ubuntu-x64.zip"
+            "https://github.com/ggml-org/llama.cpp/releases/latest/download/llama-bin-ubuntu-x64.zip"
+          )
+
+          FOUND=0
+          for U in "${ASSET_URLS[@]}"; do
+            echo "Trying llama.cpp asset: $U"
+            if curl -fL "$U" -o llama.zip; then
+              FOUND=1
+              break
+            fi
+          done
+
+          if [ "$FOUND" -ne 1 ]; then
+            echo "Could not download a llama.cpp release asset from known URLs."
+            echo "Update .github/workflows/local-backend-smoke.yml with current asset name."
+            exit 1
+          fi
+
           unzip -q llama.zip -d llama_bin
           chmod +x llama_bin/llama-cli
           echo "$PWD/llama_bin" >> "$GITHUB_PATH"
