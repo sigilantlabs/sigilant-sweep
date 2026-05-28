@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sigilant-sweep"
-version = "0.1.13"
+version = "0.1.14"
 description = "Open-source inference sweep for llama.cpp and vLLM: TPS, TTFT, ITL, and PPL across 16 configs."
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -43,12 +43,6 @@ sigilant-runner = "sigilant_runner.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["sigilant_runner"]
-
-[tool.hatch.build]
-include = [
-    "sigilant_runner/data/*.txt",
-    "sigilant_runner/data/depth_prompts/*.txt",
-]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
