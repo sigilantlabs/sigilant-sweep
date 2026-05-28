@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 45
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      LLAMA_CPP_REF: "09e7b76"
 
     steps:
       - name: Checkout
@@ -28,7 +29,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git cmake build-essential
 
-          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git
+          git clone https://github.com/ggml-org/llama.cpp.git
+          cd llama.cpp
+          git checkout "$LLAMA_CPP_REF"
+          cd ..
           cmake -S llama.cpp -B llama.cpp/build -DGGML_CUDA=OFF
           cmake --build llama.cpp/build --target llama-cli -j"$(nproc)"
 
