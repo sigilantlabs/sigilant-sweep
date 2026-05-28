@@ -340,6 +340,9 @@ sigilant-sweep run \
   --depth-prompt-28k prompts/hard_quality_28k_prompt.txt
 ```
 
+Note: with `pip install` usage from any folder, these defaults auto-resolve to packaged prompt files.
+Custom prompt files can still be passed explicitly with absolute or relative paths.
+
 ### llama.cpp with structured-output smoke
 
 ```bash

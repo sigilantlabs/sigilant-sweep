@@ -14,6 +14,7 @@ from rich.table import Table
 from rich import box
 
 from . import __version__
+from .core.depth_prompts import resolve_depth_prompt_path
 
 app = typer.Typer(
     name="sigilant-sweep",
@@ -237,9 +238,11 @@ def run(
     prev_prompt_env = os.environ.get("SIGILANT_BENCH_PROMPT_FILE")
     try:
         if mode == "depth_profile":
-            p8 = Path(depth_prompt_8k)
+            p8, p8_source = resolve_depth_prompt_path(depth_prompt_8k, "8k")
             if p8.exists():
                 os.environ["SIGILANT_BENCH_PROMPT_FILE"] = str(p8.resolve())
+                if p8_source == "packaged_default":
+                    console.print("[dim]Depth prompt 8k:[/dim] using packaged default")
         results = _dispatch_with_infra_retry(prompt_label="ranking/8k", trials_local=resolved_trials)
     except RuntimeError as exc:
         console.print(f"[red]Error:[/red] {exc}")
@@ -288,9 +291,11 @@ def run(
         try:
             # Include 8k pass from already-scored ranking results without extra GPU run.
             dw = _best_result(results)
+            p8_resolved, p8_source = resolve_depth_prompt_path(depth_prompt_8k, "8k")
             depth_runs.append({
                 "depth_label": "8k",
-                "prompt_path": str(Path(depth_prompt_8k).resolve()) if Path(depth_prompt_8k).exists() else depth_prompt_8k,
+                "prompt_path": str(p8_resolved.resolve()) if p8_resolved.exists() else depth_prompt_8k,
+                "prompt_source": p8_source,
                 "prompt_tokens_est": _runtime_prompt_tokens_est(results),
                 "error": None,
                 "winner": (dw.config.label() if dw else None),
@@ -309,11 +314,12 @@ def run(
                 "derived_from_ranking": True,
             })
             for dlabel, dpath in depth_specs:
-                p = Path(dpath)
+                p, p_source = resolve_depth_prompt_path(dpath, dlabel)
                 if not p.exists():
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": dpath,
+                        "prompt_source": p_source,
                         "prompt_tokens_est": None,
                         "error": "prompt_missing",
                         "winner": None,
@@ -321,6 +327,8 @@ def run(
                     })
                     continue
                 os.environ["SIGILANT_BENCH_PROMPT_FILE"] = str(p.resolve())
+                if p_source == "packaged_default":
+                    console.print(f"[dim]Depth prompt {dlabel}:[/dim] using packaged default")
                 try:
                     dresults = _dispatch_with_infra_retry(prompt_label=f"depth/{dlabel}", trials_local=resolved_trials)
                     dresults = compute_scores(dresults, profile=profile)
@@ -328,6 +336,7 @@ def run(
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": str(p.resolve()),
+                        "prompt_source": p_source,
                         "prompt_tokens_est": _runtime_prompt_tokens_est(dresults),
                         "error": None,
                         "winner": (dw.config.label() if dw else None),
@@ -351,6 +360,7 @@ def run(
                     depth_runs.append({
                         "depth_label": dlabel,
                         "prompt_path": str(p.resolve()),
+                        "prompt_source": p_source,
                         "prompt_tokens_est": None,
                         "error": f"{'infra_failed' if is_infra else type(exc).__name__}: {exc}",
                         "winner": None,
