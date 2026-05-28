@@ -45,6 +45,47 @@ jobs:
           sigilant-sweep info
           llama-cli --version
 
+      - name: Debug llama-cli raw output
+        run: |
+          set -euo pipefail
+          python3 -m pip install -q huggingface-hub
+
+          MODEL_PATH="$(
+            python3 - <<'PY'
+from huggingface_hub import hf_hub_download
+print(hf_hub_download(
+    repo_id='Qwen/Qwen2.5-1.5B-Instruct-GGUF',
+    filename='qwen2.5-1.5b-instruct-q5_k_m.gguf',
+))
+PY
+          )"
+
+          echo "MODEL_PATH=$MODEL_PATH"
+
+          echo "=== llama-cli generation raw ==="
+          llama-cli \
+            -m "$MODEL_PATH" \
+            -p "hello" \
+            --single-turn \
+            --temp 0 \
+            --top-k 1 \
+            --seed 42 \
+            -t 6 \
+            -n 32 \
+            --ctx-size 16384 \
+            --simple-io \
+            2>&1 | tee llama_gen_raw.log
+
+          echo "=== llama-cli perplexity raw ==="
+          printf "test corpus for ppl\n" > ppl_tmp.txt
+          llama-cli \
+            -m "$MODEL_PATH" \
+            --perplexity \
+            --file ppl_tmp.txt \
+            --ctx-size 512 \
+            --no-display-prompt \
+            2>&1 | tee llama_ppl_raw.log
+
       - name: Local backend smoke
         run: |
           sigilant-sweep run \
@@ -69,5 +110,7 @@ jobs:
             sigilant_summary.md
             sigilant_frontier.svg
             sigilant_terminal.txt
+            llama_gen_raw.log
+            llama_ppl_raw.log
             artifacts/runs/**
           if-no-files-found: warn
