@@ -198,6 +198,20 @@ class ModalBackend:
             trials  = int(data.get("trials", 1))
             bench_prompt = str(data.get("evaluation_prompt") or _BENCH_PROMPT)
             ppl_corpus = str(data.get("ppl_corpus") or _PPL_CORPUS)
+
+            # Emit exact llama.cpp build info once per sweep for reproducibility/debugging.
+            try:
+                _v = subprocess.run([_LLAMA_CLI, "--version"], text=True, capture_output=True, timeout=20)
+                _vv = ((_v.stdout or "") + ("\n" + (_v.stderr or "") if (_v.stderr or "").strip() else "")).strip()
+                if _vv:
+                    print("[sigilant-sweep] llama-cli version:")
+                    for _line in _vv.splitlines():
+                        if _line.strip():
+                            print(_line.strip())
+                            break
+            except Exception as _exc:
+                print(f"[sigilant-sweep] llama-cli version check failed: {_exc}")
+
             print(f"[sigilant-sweep] {len(configs)} configs × {trials} trial(s)")
             print(
                 f"[sigilant-sweep] evaluation prompt: chars={len(bench_prompt)} "
@@ -558,6 +572,16 @@ class ModalBackend:
             _FORCE_MIN_TOKENS = max(1, int(os.environ.get("SIGILANT_VLLM_FORCE_MIN_TOKENS", "64")))
 
             data = json.loads(payload)
+
+            # Emit exact llama.cpp build info once per sweep for reproducibility/debugging.
+            try:
+                _v = subprocess.run([_LLAMA_CLI, "--version"], text=True, capture_output=True, timeout=20)
+                _vv = ((_v.stdout or "") + ("\n" + (_v.stderr or "") if (_v.stderr or "").strip() else "")).strip()
+                if _vv:
+                    print("[sigilant-sweep] llama-cli version:")
+                    print(_vv.splitlines()[0])
+            except Exception as _exc:
+                print(f"[sigilant-sweep] llama-cli version check failed: {_exc}")
             configs = data["configs"]
             trials = max(1, int(data.get("trials", 1)))
             bench_prompt = str(data.get("evaluation_prompt") or _BENCH_PROMPT)

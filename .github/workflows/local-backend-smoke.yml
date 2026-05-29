@@ -73,10 +73,14 @@ jobs:
             2>&1 | tee llama_gen_raw.log
 
           echo "=== llama-perplexity raw ==="
-          printf "test corpus for ppl\n" > ppl_tmp.txt
+          PPL_CORPUS_PATH="$PWD/sigilant_runner/data/ppl_corpus_250.txt"
+          if [ ! -f "$PPL_CORPUS_PATH" ]; then
+            echo "Missing PPL corpus at $PPL_CORPUS_PATH"
+            exit 1
+          fi
           llama-perplexity \
             -m "$MODEL_PATH" \
-            --file ppl_tmp.txt \
+            --file "$PPL_CORPUS_PATH" \
             --ctx-size 512 \
             2>&1 | tee llama_ppl_raw.log
 
