@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import os
 import re
+import json
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 # Quant files to look for, in preference order.
 # 3-bit policy: prefer IQ3_M; use Q3_K_M only as fallback when IQ3_M is absent.
@@ -149,3 +150,49 @@ def infer_params_b(model: str) -> float:
     if not m:
         m = re.search(r"(\d+\.?\d*)[bB](?:[-_\s]|$)", model)
     return float(m.group(1)) if m else 7.0
+
+
+def infer_model_profile(model: str, repo_id: str = "") -> Dict[str, Any]:
+    """Best-effort architecture profile for fit estimation.
+
+    Returns keys:
+      n_layers, hidden_size, n_heads, n_kv_heads, head_dim, is_moe, num_experts, uncertain
+    """
+    out: Dict[str, Any] = {
+        "n_layers": 32,
+        "hidden_size": 4096,
+        "n_heads": 32,
+        "n_kv_heads": 32,
+        "head_dim": 128,
+        "is_moe": False,
+        "num_experts": 0,
+        "uncertain": True,
+    }
+    rid = (repo_id or model or "").strip()
+    if "/" not in rid:
+        return out
+    try:
+        from huggingface_hub import hf_hub_download
+        cfg = hf_hub_download(repo_id=rid, filename="config.json")
+        with open(cfg, "r", encoding="utf-8") as f:
+            j = json.load(f)
+        if isinstance(j, dict):
+            out["n_layers"] = int(j.get("num_hidden_layers", out["n_layers"]) or out["n_layers"])
+            out["hidden_size"] = int(j.get("hidden_size", out["hidden_size"]) or out["hidden_size"])
+            out["n_heads"] = int(j.get("num_attention_heads", out["n_heads"]) or out["n_heads"])
+            out["n_kv_heads"] = int(
+                j.get("num_key_value_heads", j.get("n_kv_heads", out["n_kv_heads"])) or out["n_kv_heads"]
+            )
+            # Some configs expose head dim directly; otherwise derive from hidden_size / num_attention_heads.
+            hd = j.get("head_dim", j.get("attention_head_dim", 0)) or 0
+            if hd:
+                out["head_dim"] = int(hd)
+            else:
+                out["head_dim"] = max(1, int(out["hidden_size"] // max(1, out["n_heads"])))
+            ne = j.get("num_local_experts", j.get("num_experts", 0)) or 0
+            out["num_experts"] = int(ne)
+            out["is_moe"] = bool(out["num_experts"] > 0 or j.get("moe", False))
+            out["uncertain"] = False
+    except Exception:
+        pass
+    return out

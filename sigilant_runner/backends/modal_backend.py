@@ -218,17 +218,43 @@ class ModalBackend:
                 f"tokens_est~{max(1, int(round(len(bench_prompt) / 4.0)))}"
             )
 
-            # Download each unique GGUF once at container start
+            # Download each unique GGUF once at container start.
+            # Supports split GGUF shards (e.g. ...-00001-of-00002.gguf) by
+            # downloading all shard parts before loading shard 1.
             file_cache: dict = {}
+            _split_pat = re.compile(r"^(?P<prefix>.+)-(?P<idx>\d{5})-of-(?P<total>\d{5})\.gguf$", re.IGNORECASE)
+
+            def _download_model_file(repo_id: str, filename: str) -> dict:
+                d, _, leaf = filename.rpartition("/")
+                m = _split_pat.match(leaf)
+                if not m:
+                    p = hf_hub_download(repo_id=repo_id, filename=filename)
+                    return {"model_path": p, "all_paths": [p]}
+
+                total = int(m.group("total"))
+                prefix = m.group("prefix")
+                base = (d + "/") if d else ""
+                all_paths = []
+                model_path = ""
+                print(f"[sigilant-sweep] Detected split GGUF ({total} shards): {filename}")
+                for i in range(1, total + 1):
+                    shard_leaf = f"{prefix}-{i:05d}-of-{total:05d}.gguf"
+                    shard_name = base + shard_leaf
+                    sp = hf_hub_download(repo_id=repo_id, filename=shard_name)
+                    all_paths.append(sp)
+                    if i == 1:
+                        model_path = sp
+                return {"model_path": model_path, "all_paths": all_paths}
+
             for cfg in configs:
                 key = (cfg["model_repo"], cfg["model_filename"])
                 if key not in file_cache:
                     print(f"[sigilant-sweep] Downloading {cfg['model_filename']} from {cfg['model_repo']} ...")
-                    file_cache[key] = hf_hub_download(
+                    file_cache[key] = _download_model_file(
                         repo_id=cfg["model_repo"],
                         filename=cfg["model_filename"],
                     )
-                    print(f"[sigilant-sweep] Download complete -> {file_cache[key]}")
+                    print(f"[sigilant-sweep] Download complete -> {file_cache[key]['model_path']}")
 
             def _kv_args(kv_type: str) -> list:
                 if kv_type == "k8v8":
@@ -453,7 +479,7 @@ class ModalBackend:
             cfg_meta = []
             for cfg in configs:
                 key = (cfg["model_repo"], cfg["model_filename"])
-                model_path = file_cache[key]
+                model_path = file_cache[key]["model_path"]
                 if key not in ppl_cache:
                     print(f"[sigilant-sweep] Computing PPL for {cfg['model_filename']} ...")
                     ppl_val, ppl_diag = _evaluate_ppl(model_path)
@@ -525,11 +551,12 @@ class ModalBackend:
                     )
                 results.append(result)
 
-            for path in file_cache.values():
-                try:
-                    os.unlink(path)
-                except Exception:
-                    pass
+            for meta in file_cache.values():
+                for path in meta.get("all_paths", []):
+                    try:
+                        os.unlink(path)
+                    except Exception:
+                        pass
             print("[sigilant-sweep] Sweep complete, returning results.")
             return json.dumps(results)
 

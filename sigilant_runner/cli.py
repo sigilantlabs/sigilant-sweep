@@ -129,7 +129,7 @@ def run(
     from .core.hardware import detect_hardware, KNOWN_VRAM
     from .core.grid import generate_grid
     from .core.scoring import compute_scores, resolve_weight_profile
-    from .models import resolve, infer_params_b
+    from .models import resolve, infer_params_b, infer_model_profile
     from .output.table import print_header, print_results_table
     from .output.export import export_json, export_bundle, build_repro_command
     from .core.diagnostics import build_stability_report
@@ -161,7 +161,14 @@ def run(
         console.print(f"[red]Model resolution failed:[/red] {exc}")
         raise typer.Exit(1)
 
+    model_profile = infer_model_profile(model, repo_id=repo_id or model)
+    if model_profile.get("is_moe"):
+        console.print("[yellow]MoE model detected:[/yellow] applying stricter fit margins.")
+    elif model_profile.get("uncertain"):
+        console.print("[dim]Model architecture metadata unavailable; using conservative fit defaults.[/dim]")
+
     # ── Grid ──────────────────────────────────────────────────────────────────
+    hw_key = hardware.lower() if hardware.lower() != "auto" else hw_label.lower()
     grid = generate_grid(
         models=models,
         vram_gb=vram_gb,
@@ -169,6 +176,8 @@ def run(
         max_configs=max_configs,
         model_repo=repo_id,
         engine=engine,
+        model_profile=model_profile,
+        hardware_key=hw_key,
     )
 
     if not grid:
@@ -197,6 +206,12 @@ def run(
         grid = filtered
 
     print_header(model_label, hw_label, engine, len(grid))
+    _print_proposed_grid(grid, max_configs=max_configs)
+    if not check and os.environ.get("CI", "").strip().lower() != "true":
+        proceed = typer.confirm("Proceed with this grid? (y/n)", default=True)
+        if not proceed:
+            console.print("[yellow]Run cancelled by user.[/yellow]")
+            raise typer.Exit(0)
 
     # ── Run ───────────────────────────────────────────────────────────────────
     resolved_trials = max(1, int(trials))
@@ -933,12 +948,29 @@ def _print_quick_wow(*, results, baseline_cmp, smoke_payload):
             f"({float(smoke_payload.get('pass_rate', 0.0)) * 100:.1f}%) "
             f"[{smoke_payload.get('diagnosis')}]"
         )
-    console.print("- Next step: apply this config directly in your serving launch args.")
+    console.print("- Next step: validate agent-readiness before production → sigilantlabs.com")
 
 
 def _result_key(r) -> Tuple[str, int, str, str]:
     c = r.config
     return (str(c.quant_label), int(c.context), str(c.kv_type), str(c.regime))
+
+
+def _print_proposed_grid(grid, *, max_configs: int) -> None:
+    t = Table(title="Proposed Grid", box=box.SIMPLE_HEAD, show_edge=False, pad_edge=False)
+    t.add_column("#", justify="right", style="dim")
+    t.add_column("Quant", style="cyan")
+    t.add_column("Ctx", justify="right", style="cyan")
+    t.add_column("KV", style="cyan")
+    t.add_column("Regime", style="dim")
+    for i, c in enumerate(grid, start=1):
+        t.add_row(str(i), str(c.quant_label), str(c.context), str(c.kv_type), str(c.regime))
+    console.print(t)
+    if len(grid) < int(max_configs):
+        console.print(
+            f"[yellow]Grid fill:[/yellow] {len(grid)}/{int(max_configs)} "
+            "(hardware-fit limited)."
+        )
 
 
 def _topn_configs(results, n: int):

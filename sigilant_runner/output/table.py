@@ -90,6 +90,27 @@ def print_results_table(results: List[RunResult], *, profile: str = "balanced", 
     if succeeded:
         best = succeeded[0]
         console.print(f"[bold]Best config:[/bold]  {best.config.label()}")
+
+        # Winner-at-a-glance line (prefer p95 when available).
+        best_tps = best.tps_p95 if best.tps_p95 is not None else best.tps
+        best_ttft = best.ttft_p95_ms if best.ttft_p95_ms is not None else best.ttft_ms
+        best_ppl = best.ppl
+        tps_label = "p95" if best.tps_p95 is not None else "p50"
+        ttft_label = "p95" if best.ttft_p95_ms is not None else "p50"
+        ppl_str = f"{best_ppl:.2f}" if best_ppl is not None else "—"
+        score_str = str(best.score) if best.score is not None else "—"
+        console.print(
+            f"[bold]Score:[/bold]        {score_str}  "
+            f"([dim]TPS: {best_tps:.1f} {tps_label} · TTFT: {best_ttft:.0f}ms {ttft_label} · PPL: {ppl_str}[/dim])"
+        )
+        console.print()
+        console.print("[yellow bold]⚠  PPL is a quality proxy only.[/yellow bold] Tool calling, structured JSON,")
+        console.print("[yellow]   and long-context reliability on this config are untested.[/yellow]")
+        console.print("[yellow]   → Validate before production: sigilantlabs.com[/yellow]")
+        console.print("[dim]────────────────────────────────────────────[/dim]")
+        console.print("[dim]Full results and score methodology below[/dim]")
+        console.print("[dim]────────────────────────────────────────────[/dim]")
+
     if has_ttft_p95 and has_tps_p95:
         console.print(
             "[dim]Score formula: TPS_norm = 0.5×(TPS p50 / max TPS p50) + 0.5×(TPS p95 / max TPS p95); "
@@ -110,12 +131,4 @@ def print_results_table(results: List[RunResult], *, profile: str = "balanced", 
             f"{int(w_ppl*100)}% PPL_norm (PPL unavailable -> TPS/TTFT renormalized).[/dim]"
         )
 
-    console.print()
-    console.print("[dim]PPL is a quality proxy, not production validation.[/dim]")
-    console.print()
-    console.print("[yellow bold]! Safety and capability are not fully evaluated.[/yellow bold]")
-    console.print("[dim]  Structured-output smoke helps triage model-limited vs harness-limited issues.[/dim]")
-    console.print("[dim]  Full production safety and long-context certification require Sigilant Optimizer.[/dim]")
-    console.print()
-    console.print("[dim]  → sigilantlabs.com[/dim]")
     console.print()

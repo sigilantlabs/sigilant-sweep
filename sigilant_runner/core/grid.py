@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional, Any
 
 from .metrics import RunConfig
 
@@ -40,8 +40,36 @@ _COMBOS = [
     (_CTX_XL,      "k8v8",   "long"),
 ]
 
+# Adaptive context ladder used to backfill additional fitting configs.
+_CTX_LADDER = [32768, 28672, 24576, 20480, 16384, 12288, 8192, 6144, 4096]
+
 # k8v8 uses half the KV VRAM of k16v16 — apply 0.5× to kv_gb for those combos
 _KV_SCALE = {"k16v16": 1.0, "k8v8": 0.5}
+
+# vLLM logical families are not GGUF quants, map to conservative fit factors.
+_VLLM_FAMILY_FACTOR: dict[str, float] = {
+    "FP16_BASELINE": 1.00,
+    "INT8_W8A8": 0.62,
+    "AWQ4_MARLIN": 0.34,
+    "GPTQ4_MARLIN": 0.34,
+}
+
+_FIT_CAP_BY_ENGINE_GPU = {
+    "llama.cpp": {
+        "l4": 0.86,
+        "a10g": 0.88,
+        "a100": 0.91,
+        "h100": 0.92,
+        "default": 0.88,
+    },
+    "vllm": {
+        "l4": 0.80,
+        "a10g": 0.82,
+        "a100": 0.86,
+        "h100": 0.88,
+        "default": 0.82,
+    },
+}
 
 
 def _vram_estimate_gb(
@@ -58,6 +86,140 @@ def _vram_estimate_gb(
     return weights + kv_gb
 
 
+def _estimate_for_engine(
+    *,
+    engine: str,
+    quant_label: str,
+    context: int,
+    kv_type: str,
+    model_params_b: float,
+) -> float:
+    if engine == "vllm":
+        # Reuse same estimate pipeline with vLLM-family weight factors.
+        fam = quant_label.upper()
+        factor = _VLLM_FAMILY_FACTOR.get(fam, 0.60)
+        weights = model_params_b * 2 * factor
+        kv_raw = (2 * 32 * 128 * context * 2) / (1024 ** 3)
+        kv_gb = kv_raw * _KV_SCALE.get(kv_type, 1.0)
+        # extra allocator/runtime headroom for vLLM
+        return weights + kv_gb + 1.5
+    return _vram_estimate_gb(quant_label, context, kv_type, model_params_b)
+
+
+def _fit_cap(engine: str, hardware_key: str) -> float:
+    eng = str(engine or "llama.cpp").lower()
+    hw = str(hardware_key or "default").lower()
+    table = _FIT_CAP_BY_ENGINE_GPU.get(eng, _FIT_CAP_BY_ENGINE_GPU["llama.cpp"])
+    cap = table.get("default", 0.88)
+    for k, v in table.items():
+        if k == "default":
+            continue
+        if k in hw:
+            cap = v
+            break
+    env_key = f"SIGILANT_{eng.upper().replace('.', '_')}_FIT_CAP"
+    raw = os.environ.get(env_key, "").strip()
+    if raw:
+        try:
+            val = float(raw)
+            if 0.50 <= val <= 0.98:
+                cap = val
+        except Exception:
+            pass
+    return cap
+
+
+def _kv_mem_gb_gqa(context: int, kv_type: str, model_profile: Optional[Dict[str, Any]]) -> float:
+    mp = model_profile or {}
+    n_layers = int(mp.get("n_layers", 32) or 32)
+    hidden = int(mp.get("hidden_size", 4096) or 4096)
+    n_heads = max(1, int(mp.get("n_heads", 32) or 32))
+    n_kv = max(1, int(mp.get("n_kv_heads", n_heads) or n_heads))
+    head_dim = int(mp.get("head_dim", 0) or 0)
+    if head_dim <= 0:
+        head_dim = max(1, hidden // n_heads)
+    # 2 (K+V) * layers * ctx * kv_heads * head_dim * fp16_bytes
+    kv_raw = (2 * n_layers * context * n_kv * head_dim * 2) / (1024 ** 3)
+    return kv_raw * _KV_SCALE.get(kv_type, 1.0)
+
+
+def _estimate_total_gb(
+    *,
+    engine: str,
+    quant_label: str,
+    context: int,
+    kv_type: str,
+    model_params_b: float,
+    model_profile: Optional[Dict[str, Any]],
+) -> float:
+    fam = str(quant_label or "").upper()
+    if engine == "vllm":
+        factor = _VLLM_FAMILY_FACTOR.get(fam, 0.60)
+    else:
+        factor = _QUANT_VRAM_FACTOR.get(fam, 0.60)
+    weights = model_params_b * 2 * factor
+    kv_gb = _kv_mem_gb_gqa(context, kv_type, model_profile)
+    overhead = 1.5 if engine == "vllm" else 0.6
+    if bool((model_profile or {}).get("is_moe", False)):
+        # MoE runtime safety margin only (router/activation/transient overhead).
+        # This is not re-counting expert weights.
+        weights *= 1.12
+        overhead += 0.8
+    return weights + kv_gb + overhead
+
+
+def _fits(
+    *,
+    engine: str,
+    quant_label: str,
+    context: int,
+    kv_type: str,
+    model_params_b: float,
+    vram_gb: float,
+    model_profile: Optional[Dict[str, Any]] = None,
+    hardware_key: str = "default",
+) -> bool:
+    fit_cap = vram_gb * _fit_cap(engine, hardware_key)
+    est = _estimate_total_gb(
+        engine=engine,
+        quant_label=quant_label,
+        context=context,
+        kv_type=kv_type,
+        model_params_b=model_params_b,
+        model_profile=model_profile,
+    )
+    return est <= fit_cap
+
+
+def _best_fitting_ctx(
+    *,
+    engine: str,
+    quant_label: str,
+    target_ctx: int,
+    kv_type: str,
+    model_params_b: float,
+    vram_gb: float,
+    model_profile: Optional[Dict[str, Any]] = None,
+    hardware_key: str = "default",
+) -> Optional[int]:
+    # Choose highest context <= target that fits.
+    for ctx in _CTX_LADDER:
+        if ctx > target_ctx:
+            continue
+        if _fits(
+            engine=engine,
+            quant_label=quant_label,
+            context=ctx,
+                kv_type=kv_type,
+                model_params_b=model_params_b,
+                vram_gb=vram_gb,
+                model_profile=model_profile,
+                hardware_key=hardware_key,
+            ):
+            return ctx
+    return None
+
+
 def generate_grid(
     models: List[Tuple[str, str]],  # [(quant_label, path_or_filename), ...]
     vram_gb: float,
@@ -65,8 +227,10 @@ def generate_grid(
     max_configs: int = 16,
     model_repo: str = "",
     engine: str = "llama.cpp",
+    model_profile: Optional[Dict[str, Any]] = None,
+    hardware_key: str = "default",
 ) -> List[RunConfig]:
-    """Return up to max_configs RunConfig objects that fit within vram_gb."""
+    """Return up to max_configs fit-aware RunConfig objects."""
     configs: List[RunConfig] = []
     seen: set = set()
     allowed_kv = None
@@ -77,24 +241,30 @@ def generate_grid(
             if vals:
                 allowed_kv = vals
 
+    # Pass 1: fill canonical 4 slots per quant with adaptive context backfill.
     for quant_label, model_path in models:
         for ctx, kv_type, regime in _COMBOS:
             if allowed_kv is not None and kv_type.lower() not in allowed_kv:
                 continue
-            # vLLM families are logical profile labels, not GGUF quant weights.
-            # Keep a full 16-config sweep (4 families × 4 combos) and let runtime
-            # decide feasibility on target GPU.
-            if engine != "vllm":
-                est = _vram_estimate_gb(quant_label, ctx, kv_type, model_params_b)
-                if est > vram_gb * 0.90:
-                    continue
-            sig = (quant_label.upper(), ctx, kv_type)
+            fit_ctx = _best_fitting_ctx(
+                engine=engine,
+                quant_label=quant_label,
+                target_ctx=ctx,
+                kv_type=kv_type,
+                model_params_b=model_params_b,
+                vram_gb=vram_gb,
+                model_profile=model_profile,
+                hardware_key=hardware_key,
+            )
+            if fit_ctx is None:
+                continue
+            sig = (quant_label.upper(), fit_ctx, kv_type)
             if sig in seen:
                 continue
             seen.add(sig)
             configs.append(RunConfig(
                 quant_label=quant_label,
-                context=ctx,
+                context=fit_ctx,
                 batch=_BATCH,
                 kv_type=kv_type,
                 regime=regime,
@@ -102,6 +272,46 @@ def generate_grid(
                 model_repo=model_repo,
                 model_filename=model_path if model_repo else "",
             ))
+
+    # Pass 2: if still short, backfill additional low-context fits (bias lower-memory KV).
+    if len(configs) < max_configs:
+        preferred_kv = ["k8v8", "k16v16"]
+        for quant_label, model_path in models:
+            if len(configs) >= max_configs:
+                break
+            kv_candidates = [
+                kv for kv in preferred_kv
+                if allowed_kv is None or kv in allowed_kv
+            ]
+            for kv_type in kv_candidates:
+                for ctx in [6144, 4096]:
+                    if len(configs) >= max_configs:
+                        break
+                    if not _fits(
+                        engine=engine,
+                        quant_label=quant_label,
+                        context=ctx,
+                        kv_type=kv_type,
+                        model_params_b=model_params_b,
+                        vram_gb=vram_gb,
+                        model_profile=model_profile,
+                        hardware_key=hardware_key,
+                    ):
+                        continue
+                    sig = (quant_label.upper(), ctx, kv_type)
+                    if sig in seen:
+                        continue
+                    seen.add(sig)
+                    configs.append(RunConfig(
+                        quant_label=quant_label,
+                        context=ctx,
+                        batch=_BATCH,
+                        kv_type=kv_type,
+                        regime="default",
+                        model_path=model_path if not model_repo else "",
+                        model_repo=model_repo,
+                        model_filename=model_path if model_repo else "",
+                    ))
 
     # Sort: default regime first, then long; within regime larger ctx first
     regime_order = {"default": 0, "long": 1}
